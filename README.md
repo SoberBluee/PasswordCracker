@@ -1,11 +1,11 @@
 # PasswordCracker
 Dissertation password cracker
 
-#Table of Contents
+# Table of Contents
 
 
-#Background
+# Background
 
-#Install
+# Install
 
-#Usage
+# Usage
