@@ -1,0 +1,1 @@
+pyuic6 -x options.ui -o GUIOptions.py

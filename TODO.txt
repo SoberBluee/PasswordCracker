@@ -1,0 +1,19 @@
+GUI Output attack results to output box
+    - need to test dictionary attack    
+    - need to implement output display from dictionaryAttackClass 
+
+GUI output attack results to file 
+    -figure out format of output to make it easy to import
+
+allow user to select CPU and GPU
+    -when doing gpu try install cuda with python
+
+allow user to load previous attack
+
+implement hash detector
+
+start with recursive brute force
+    - try and kill the thread when found 
+    - if not try to implement itterative approach 
+
+
