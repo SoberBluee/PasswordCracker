@@ -1,0 +1,20 @@
+name=attack
+hash_value=40BD001563085FC35165329EA1FF5C5ECBDBBEEF
+hash_type=sha1
+attack_type=Dictionary
+wordlist_location=C:/Users/ethan/Downloads/rockyou.txt
+hash_file_location=
+lowerCharset=False
+upperCharset=False
+numberCharset=False
+symbolsCharset=False
+wordlistLbl=rockyou.txt
+core_count=2
+passphrase_count=0
+bruteforce_count=0
+output=
+Starting Attack 
+Hash: 40BD001563085FC35165329EA1FF5C5ECBDBBEEF
+Type: sha1
+Attack: Dictionary
+Wordlist: C:/Users/ethan/Downloads/rockyou.txt
