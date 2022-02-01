@@ -16,4 +16,6 @@ start with recursive brute force
     - try and kill the thread when found 
     - if not try to implement itterative approach 
 
+start unit testing instead to show testing better
+
 

@@ -169,7 +169,7 @@ class DictionaryWorker(QRunnable):
     """
     def dictionary_gpu(self):
         print("dictionary_gpu")
-        
+
         #start gpu attack
 
     """

@@ -5,15 +5,16 @@ import numpy as np
 import hashlib
 import logging
 
+from GUIDesign import AttackOptions
+
 class DicionaryAttack():
     """
     Name: __init__
     Description: Initializes multi-processing data  
-    Parameters: self, AttackOptions: Object
+    Parameters: self, AttackOptions: Object, data: List, found: Event
     returns: none
     """
-
-    def __init__(self, attack_options, data, found):
+    def __init__(self, attack_options:AttackOptions, data, found):
         self.attack_options = attack_options
         self.data= data
         self.found = found
@@ -28,11 +29,16 @@ class DicionaryAttack():
     Parameters: self
     returns: hashing algorithm
     """
-
     def get_hashing_algorithm(self):
         return hashlib.new(self.attack_options.hash_type)
-
-    def saveOutput(self, passwd, s = 0):
+    
+    """
+    Name: saveOutput
+    Description: Get the hashing algorithm using a string
+    Parameters: self
+    returns: hashing algorithm
+    """
+    def save_output(self, passwd):
         password = passwd
         filename = ""
         num = 1
@@ -77,7 +83,7 @@ class DicionaryAttack():
                 print(f'{self.time:.4f} seconds')
                 self.password = passwd.decode('utf-8')
             
-                self.saveOutput(passwd)
+                self.save_output(passwd)
 
                 self.found.set()
 
