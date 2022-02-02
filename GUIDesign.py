@@ -91,6 +91,9 @@ class DictionaryWorker(QRunnable):
         self.process_list = list()
         self.data = None
 
+    def data_generator():
+        pass
+
     """"
     Name: split_data
     Description: Splits rockyou.txt into equal sections for processing  
@@ -98,21 +101,52 @@ class DictionaryWorker(QRunnable):
     returns: none
     """
     def split_data(self):
-        data_to_split = set()
+        data_to_split = list()
         tic = time.time()
         with open(self.attack_options.wordlist_location, encoding="latin-1") as file:
-            for line in file:
-                line = line.rstrip()
-                data_to_split.add(line)
+            #append data using set comprehensions
+            data_to_split = [line for line in file]
 
-        data_to_split = list(data_to_split)
         data = [data_to_split[i::self.attack_options.core_count] for i in range(self.attack_options.core_count)] #split up data into chuncks for each process
-    
         toc = time.time()
+        
         print('Split Data: {:.4f} seconds'.format(toc-tic))
         logging.info('Split Data: {:.4f} seconds'.format(toc-tic))
+        self.output.append(' Split Data: {:.4f} seconds'.format(toc-tic))
+        
         return data
     
+    """
+    Name: process_result
+    Description: Will get the correct result file and output result to output box
+    Parameters: self 
+    returns: none
+    """
+    def process_result(self):
+        result_counter = 0 
+        #Will cound number of results file in case there are more than one result file
+        for filename in os.listdir("AppData/"):
+            if filename.startswith("result"):
+                result_counter += 1
+
+        #Will get the latest version of the results from AppData folder
+        if(result_counter == 0):
+            filename = f"AppData/result.txt"
+        else:
+            result_counter -= 1 
+            if(result_counter == 0):
+                filename = f"AppData/result.txt"
+            else:
+                filename = f"AppData/result{result_counter}.txt"
+
+        #Will open the results file and output results in the correct order
+        with open(filename, "r") as result:
+            for idx, data in enumerate(result):
+                if(idx == 1):
+                    self.output.append(f" {data} sec")
+                else:
+                    self.output.append(f" Password: {data}")
+
     """
     Name: dictionary_cpu
     Description: Will start a dictionary attack using the CPU
@@ -137,40 +171,19 @@ class DictionaryWorker(QRunnable):
             
         #Wait's until password is found
         self.found.wait()
+
         #Terminates processes
         for process in self.process_list:
             print("Terminating")
             process.terminate()
 
-        result = []
         for process in self.process_list:
             process.join()
-            result.append(process.exitcode)
-
-        result_counter = 0 
-        for filename in os.listdir("AppData/"):
-            if filename.startswith("result"):
-                result_counter += 1
-        
-        if(result_counter == 0):
-            filename = f"AppData/result.txt"
-        else:
-            result_counter -= 1 
-            if(result_counter == 0):
-                filename = f"AppData/result.txt"
-            else:
-                filename = f"AppData/result{result_counter}.txt"
-
-        with open(filename, "r") as result:
-            for idx, data in enumerate(result):
-                if(idx == 1):
-                    self.output.append(f" {data} sec")
-                else:
-                    self.output.append(f" Password:{data}")
+            
+        self.process_result()
         
         self.output.append(" Attack Finished ")
 
-        print(result) 
         print("Done")
        
     
@@ -250,8 +263,6 @@ class MarkovWorker(QRunnable):
         pass
     def run(self):
         pass
-
-
 
 
 """
@@ -838,11 +849,11 @@ class Ui_App(object):
         self.attack_options.gpu = self.gpu_enabled.isChecked()
         self.attack_options.core_count = self.options.attack_options.core_count
         self.output.append(" Starting Attack ")
-        self.output.append(f"   Hash: {self.attack_options.hash_value}")
-        self.output.append(f"   Type: {self.attack_options.hash_type}")
-        self.output.append(f"   Attack: {self.attack_options.attack_type}")
-        self.output.append(f"   Wordlist: {self.attack_options.wordlist_location}")
-        self.output.append(f"   Processes: {self.attack_options.core_count}")
+        self.output.append(f"       - Hash: {self.attack_options.hash_value}")
+        self.output.append(f"       - Type: {self.attack_options.hash_type}")
+        self.output.append(f"       - Attack: {self.attack_options.attack_type}")
+        self.output.append(f"       - Wordlist: {self.attack_options.wordlist_location}")
+        self.output.append(f"       - Processes: {self.attack_options.core_count}")
         
         parameter_check = self._check_parameters()
         if(parameter_check == [True, True, True]):
@@ -858,17 +869,9 @@ class Ui_App(object):
              
                 runnable = DictionaryWorker(self.attack_options, self.output)
                 pool.start(runnable)
-        
-                
-
-        
-                     
         else:
             print("Cannot start attack")
 
-        
-
-    
     """
     Name: _pause
     Description: Will pause a current attack
@@ -945,9 +948,10 @@ class Ui_App(object):
         attack_location = QtWidgets.QFileDialog.getOpenFileName(None, 'Open Previous attack', 'C:\\', '*.txt')
         self.attack_options = None
         data = list()
-        try:
-            with open(attack_location[0], encoding="latin-1") as file:
-                for idx, data in enumerate(file):
+        
+        with open(attack_location[0], encoding="latin-1") as file:
+            for idx, data in enumerate(file):
+                if(idx < 15):
                     data = data.split("=")
                     data[1] = data[1].replace("\n", "")
                     #Handles name in file
@@ -964,28 +968,36 @@ class Ui_App(object):
                     elif(idx == 5):
                         self.attack_options.hash_file_location = data[1]
                     elif(idx == 6):
-                        self.attack_options.charsetLower = data[1]
+                        self.attack_options.charsetLower = bool(data[1])
                     elif(idx == 7):
-                        self.attack_options.charsetUpper = data[1]
+                        self.attack_options.charsetUpper = bool(data[1])
                     elif(idx == 8):
-                        self.attack_options.charsetNumbers = data[1]
+                        self.attack_options.charsetNumbers = bool(data[1])
                     elif(idx == 9):
-                        self.attack_options.charsetSymbols = data[1]
+                        self.attack_options.charsetSymbols = bool(data[1])
+                    elif(idx == 10):
+                        self.wordlistLbl.setText(data[1])
                     elif(idx == 11):
-                        self.attack_options.core_count = data[1]
+                        self.attack_options.core_count = bool(data[1])
                     elif(idx == 12):
-                        self.attack_options.pass_phrase_len = data[1]
+                        self.attack_options.pass_phrase_len = bool(data[1])
                     elif(idx == 13):
                         self.attack_options.max_brute_force = data[1]
-                    else:
-                        self.output.append(data[1])
-        except IndexError:
-            self.output.append(data[0])
-
+                else:
+                    self.output.append(data)
 
         self.hashInputTxt.setText(self.attack_options.hash_value)
-            
-                
+        self.hashTypeCombo.setCurrentText(self.attack_options.hash_type)
+        self.attackTypeCombo.setCurrentText(self.attack_options.attack_type)
+        self.wordlistTxt.setPlainText(self.attack_options.wordlist_location)
+        self.charsetAll.setChecked(self.attack_options.charsetAll)
+        self.charsetLower.setChecked(self.attack_options.charsetLower)
+        self.charsetUpper.setChecked(self.attack_options.charsetUpper)
+        self.charsetNumbers.setChecked(self.attack_options.charsetNumbers)
+        self.charsetSymbols.setChecked(self.attack_options.charsetSymbols)
+        self.cpu_enabled.setChecked(self.attack_options.cpu)
+        self.gpu_enabled.setChecked(self.attack_options.gpu)
+
     """
     Name: _options
     Description: will open up the application options
