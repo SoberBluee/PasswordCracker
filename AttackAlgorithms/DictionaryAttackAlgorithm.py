@@ -1,11 +1,5 @@
-
 import time
-import multiprocessing as mp
-import numpy as np
 import hashlib
-import logging
-
-from GUIDesign import AttackOptions
 
 class DicionaryAttack():
     """
@@ -14,14 +8,13 @@ class DicionaryAttack():
     Parameters: self, AttackOptions: Object, data: List, found: Event
     returns: none
     """
-    def __init__(self, attack_options:AttackOptions, data, found):
+    def __init__(self, attack_options, data, found):
         self.attack_options = attack_options
         self.data= data
         self.found = found
         self.passwords_tried = 0
         self.password = ""
         self.time = 0.0
-        
         
     """
     Name: get_hashing_algorithm
@@ -43,7 +36,7 @@ class DicionaryAttack():
         filename = ""
         num = 1
         try:
-            with open("result.txt", "x") as result:
+            with open("AppData/result.txt", "x") as result:
                 result.write(f"{password}\n")
                 result.write(f"{self.time:.4f}")
                 result.close()
@@ -53,8 +46,6 @@ class DicionaryAttack():
                 result.write(f"{password}\n")
                 result.write(f"{self.time:.4f}")
                 result.close()
-
-
 
     """
     Name: dictionary_attack

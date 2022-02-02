@@ -20,7 +20,7 @@ from GUIOptions import Ui_OptionsWindow
 from ctypes import c_char
 import logging
 
-logging.basicConfig(filename="guiDesign.log", filemode="w", format="'%(name)s -=- %(levelname)s - %(message)s - %(process)s")
+logging.basicConfig(filename="log/guiDesign.log", filemode="w", format="'%(name)s -=- %(levelname)s - %(message)s - %(process)s")
 
 """
 Class Name: BruteForceWorker
@@ -188,7 +188,59 @@ class DictionaryWorker(QRunnable):
             self.output.append(" Using GPU")
             self.dictionary_gpu()
         
-        
+
+class RuleBasedWorker(QRunnable):
+    def __init__(self, attack_options):
+        pass
+    def split_data(self):
+        pass
+    def rulebase_cpu(self):
+        pass
+    def rulebase_gpu(self):
+        pass
+    def run(self):
+        pass
+    
+
+class HybridWorker(QRunnable):
+    def __init__(self, attack_options):
+        pass
+    def split_data(self):
+        pass
+    def hybrid_cpu(self):
+        pass
+    def hybrid_gpu(self):
+        pass
+    def run(self):
+        pass
+
+class RainbowTableWorker(QRunnable):
+    def __init__(self, attack_options):
+        pass
+    def split_data(self):
+        pass
+    def rainbowtable_cpu(self):
+        pass
+    def rainbowtable_gpu(self):
+        pass
+    def run(self):
+        pass
+
+class MarkovWorker(QRunnable):
+    def __init__(self, attack_options):
+        pass
+    def split_data(self):
+        pass
+    def markov_cpu(self):
+        pass
+    def markov_gpu(self):
+        pass
+    def run(self):
+        pass
+
+
+
+
 """
 Class Name: AttackOptions
 Class Description: Storage class to store all attack parameters.
@@ -952,7 +1004,7 @@ if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
     App = QtWidgets.QMainWindow()
-    app.setWindowIcon(QtGui.QIcon('logo.png'))
+    app.setWindowIcon(QtGui.QIcon('img/logo.png'))
     ui = Ui_App()
     ui.setupUi(App)
     App.show()

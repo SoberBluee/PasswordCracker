@@ -84,7 +84,7 @@ class Ui_OptionsWindow(object):
 
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
-        Form.setWindowIcon(QtGui.QIcon('logo.png'))
+        Form.setWindowIcon(QtGui.QIcon('img/logo.png'))
         Form.setWindowTitle(_translate("Form", "Attack Options"))
         self.OptionsGroup.setTitle(_translate("Form", "Options"))
         self.processLbl.setText(_translate("Form", "Processes:"))
