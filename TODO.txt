@@ -1,14 +1,14 @@
-GUI Output attack results to output box
-    - need to test dictionary attack    
-    - need to implement output display from dictionaryAttackClass 
+
+- need to test dictionary attack    
+
+-put new output result code into a function
+
+- allow user to load previous attack
 
 GUI output attack results to file 
     -figure out format of output to make it easy to import
 
-allow user to select CPU and GPU
-    -when doing gpu try install cuda with python
-
-allow user to load previous attack
+- install cuda with python
 
 implement hash detector
 

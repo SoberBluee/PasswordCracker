@@ -26,6 +26,23 @@ class DicionaryAttack():
         return hashlib.new(self.attack_options.hash_type)
     
     """
+    Name: recurse_filename
+    Description: Will recursivly change the filename if the same one already exists
+    Parameters: self, num:Integer, password:String
+    returns: none
+    """
+    def recurse_filename(self,num, password):
+        try:
+            new_filename = f"AppData/result{num}.txt"
+            with open(new_filename, "x") as result:
+                result.write(f"{password}\n")
+                result.write(f"{self.time:.4f}")
+                result.close()
+        except FileExistsError:
+            self.recurse_filename(num+1, password)
+        
+
+    """
     Name: saveOutput
     Description: Get the hashing algorithm using a string
     Parameters: self
@@ -37,15 +54,12 @@ class DicionaryAttack():
         num = 1
         try:
             with open("AppData/result.txt", "x") as result:
-                result.write(f"{password}\n")
+                result.write(f"{password}")
                 result.write(f"{self.time:.4f}")
                 result.close()
         except FileExistsError:
-            num +=1
-            with open("result{num}.txt") as result:
-                result.write(f"{password}\n")
-                result.write(f"{self.time:.4f}")
-                result.close()
+            self.recurse_filename(num, passwd)
+            
 
     """
     Name: dictionary_attack
@@ -64,6 +78,7 @@ class DicionaryAttack():
             hash_algorithm = self.get_hashing_algorithm()
             hash_algorithm.update(passwd)
             hash = hash_algorithm.hexdigest()
+            passwd = str(passwd, 'UTF-8')
             
             # print(f"{hash}:{self.hash_to_crack}")
             if(hash == self.hash_to_crack):
@@ -72,7 +87,7 @@ class DicionaryAttack():
                 end = time.time()
                 self.time = end-start
                 print(f'{self.time:.4f} seconds')
-                self.password = passwd.decode('utf-8')
+                
             
                 self.save_output(passwd)
 
