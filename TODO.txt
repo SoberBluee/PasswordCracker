@@ -1,9 +1,8 @@
-GUI output attack results to file 
-    -figure out format of output to make it easy to import
 
-- install cuda with python
-
-implement hash detector
+brute force
+    - make sure all input variables are in the attack_option
+    - make starting point algorithm to have different stasrting points in the charset
+    - recursive brute force 
 
 start with recursive brute force
     - try and kill the thread when found 
@@ -11,12 +10,13 @@ start with recursive brute force
 
 start unit testing instead to show testing better
 
+implement hash detector
+
+
 - need to test dictionary attack    
-
-
-
-
-
 
 #Needs to be polished
 \- allow user to load previous attack
+
+#installewd cuda on anaconda
+need to experiment with it

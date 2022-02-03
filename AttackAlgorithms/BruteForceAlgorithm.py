@@ -11,9 +11,11 @@ class BruteForce():
     #Description: Initializes multi-processing data 
     #Parameters: self, AttackOptions: Object
     #returns: none
-    def __init__(self, AttackOptions):
+    def __init__(self, AttackOptions, starting_point, charset, found):
         self.Attack_options = AttackOptions
-        self.cores_count = 2
+        self.starting_point = starting_point
+        self.charset = charset
+        self.found = found
         
     #Name: generate_string
     #Description: Will generate a string password
@@ -36,23 +38,8 @@ class BruteForce():
             print('{} is a Perfect number'.format(n))
         
     def main(self):
+        print("Starting brute force")
         
-        processes = []
-        print("-Start Brute Force-")
-        tic = time.time()
-        for x in range(5):
-            worker = mp.Process(target= self.brute_force)
-            processes.append(worker)
-
-        #starts each process
-        for process in processes:
-            process.start()
-
-        for process in processes: 
-            process.join()
-
-        toc = time.time()
-        print('Done in {:.4f} seconds'.format(toc-tic))
             
         
 

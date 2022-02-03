@@ -12,11 +12,13 @@ import os
 import multiprocessing
 from multiprocessing import Process, Array, Event
 import logging
+import random
 
 #PyQt6 imports
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtWidgets import QFileDialog, QApplication, QWidget
 from PyQt6.QtCore import QObject, QRunnable, QThread, pyqtSignal, Qt, QThreadPool
+from numpy import character
 
 #Attack algorithm imports
 from AttackAlgorithms.BruteForceAlgorithm import BruteForce 
@@ -37,10 +39,34 @@ class BruteForceWorker(QRunnable):
     Parameters: self, attack_options: AttackOptions
     returns: none
     """
-    def __init__(self, attack_options):
+    def __init__(self, attack_options, charset, output):
         super().__init__()
         self.attack_options = attack_options
+        self.charset = charset
+        self.output = output
+        self.process_list = list()
+        self.core_count = self.attack_options.core_count
 
+        
+    def split_data(self):
+        split_data = list()
+        self.charset = list(self.charset)
+
+        charset_len = len(self.charset)
+        gap = int(charset_len / self.attack_options.core_count)
+
+        #split data based on a gap size 
+        data = [self.charset[i:i+gap] for i in range(0, charset_len, gap)]
+        #if the split data size does not match the core_count then it will randomly allocate a character to another array
+        if(len(data) != self.core_count):
+            odd = data[-1]
+            for idx, x in enumerate(odd):
+                random_int = random.randint(0,self.core_count)
+                data[random_int] += x
+            data.pop(-1)
+            
+        return data
+    
     """
     Name: brute_force_cpu
     Description: Will start a brute force attack using the CPU
@@ -48,7 +74,42 @@ class BruteForceWorker(QRunnable):
     returns: none
     """
     def brute_force_cpu(self):
-        pass
+        data = self.split_data()
+
+        #found event triggered when password found
+        self.found = Event()
+    
+        for idx,i in enumerate(range(self.core_count)):
+            starting_point = data[i][0]
+
+            print(starting_point)
+            
+            dictionary = BruteForce(self.attack_options, starting_point, self.charset ,self.found)
+
+            #Creating process using the dictionary main function
+            p = multiprocessing.Process(target=dictionary.main)
+            self.process_list.append(p)
+
+        #Starts processes
+        for process in self.process_list:
+            process.start()
+            
+        #Wait's until password is found
+        self.found.wait()
+
+        #Terminates processes
+        for process in self.process_list:
+            print("Terminating")
+            process.terminate()
+
+        for process in self.process_list:
+            process.join()
+            
+        self.process_result()
+        
+        self.output.append(" Attack Finished ")
+
+        print("Done")
     
     """
     Name: brute_force_gpu
@@ -66,9 +127,15 @@ class BruteForceWorker(QRunnable):
     returns: none
     """
     def run(self):
-        brute_force = BruteForce(self.attack_option)
-        self.result = brute_force.main()
-        print(self.result)
+        if(self.attack_options.cpu):
+            logging.info("CPU SELECTED")
+            self.output.append(" Using CPU")
+            self.brute_force_cpu()
+        elif(self.attack_options.gpu):
+            logging.info("GPU SELECTED")
+            self.output.append(" Using GPU")
+            self.brute_force_gpu()
+        
 
 
 """
@@ -90,6 +157,7 @@ class DictionaryWorker(QRunnable):
         self.output = output
         self.process_list = list()
         self.data = None
+        self.core_count = self.attack_options.core_count
 
     def data_generator():
         pass
@@ -107,7 +175,7 @@ class DictionaryWorker(QRunnable):
             #append data using set comprehensions
             data_to_split = [line for line in file]
 
-        data = [data_to_split[i::self.attack_options.core_count] for i in range(self.attack_options.core_count)] #split up data into chuncks for each process
+        data = [data_to_split[i::self.core_count] for i in range(self.core_count)] #split up data into chuncks for each process
         toc = time.time()
         
         print('Split Data: {:.4f} seconds'.format(toc-tic))
@@ -159,7 +227,7 @@ class DictionaryWorker(QRunnable):
         #found event triggered when password found
         self.found = Event()
        
-        for idx,t in enumerate(range(self.attack_options.core_count)):
+        for idx,t in enumerate(range(self.core_count)):
             dictionary = DicionaryAttack(self.attack_options, data[idx], self.found)
             #Creating process using the dictionary main function
             p = multiprocessing.Process(target=dictionary.main)
@@ -769,6 +837,7 @@ class Ui_App(object):
             self.output.append("-= No Attack Type Selected =-")
             check[2] = False
         return check
+
     """
     Name: __getHashValue__
     Description: Will return the plain text hash value from input box
@@ -857,18 +926,32 @@ class Ui_App(object):
         
         parameter_check = self._check_parameters()
         if(parameter_check == [True, True, True]):
-            self.thread = QThread()
-            
+
             if(self.attack_options.attack_type == "Brute Force"):
+                character_set = ""
+                if(self.attack_options.charsetAll):
+                    character_set = self.numeric + self.lower_alpha + self.upper_alpha + self.symbols
+                elif(self.attack_options.charsetLower):
+                    character_set = self.lower_alpha
+                elif(self.attack_options.charsetUpper):
+                    character_set = self.upper_alpha
+                elif(self.attack_options.charsetNumbers):
+                    character_set = self.numeric
+                elif(self.attack_options.charsetSymbols):
+                    character_set = self.symbols
+                else:
+                    self.output.append("Please Select at least 1 character set to start a Brute Force attack")
                 
-            
-                
-                return
-            if(self.attack_options.attack_type == "Dictionary"):
+                #Creates another thread for the attack to run on to prevent application freezing
                 pool = QThreadPool.globalInstance()
-             
-                runnable = DictionaryWorker(self.attack_options, self.output)
-                pool.start(runnable)
+                worker = BruteForceWorker(self.attack_options, character_set ,self.output)
+                pool.start(worker)
+
+            if(self.attack_options.attack_type == "Dictionary"):
+                #Creates another thread for the attack to run on to prevent application freezing
+                pool = QThreadPool.globalInstance()
+                worker = DictionaryWorker(self.attack_options, self.output)
+                pool.start(worker)
         else:
             print("Cannot start attack")
 
