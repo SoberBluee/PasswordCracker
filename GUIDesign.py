@@ -21,6 +21,7 @@ from PyQt6.QtCore import QObject, QRunnable, QThread, pyqtSignal, Qt, QThreadPoo
 from numpy import character
 
 #Attack algorithm imports
+from AttackOptions import AttackOptions
 from AttackAlgorithms.BruteForceAlgorithm import BruteForce 
 from AttackAlgorithms.DictionaryAttackAlgorithm import DicionaryAttack
 from GUIOptions import Ui_OptionsWindow
@@ -66,6 +67,37 @@ class BruteForceWorker(QRunnable):
             data.pop(-1)
             
         return data
+
+    """
+    Name: process_result
+    Description: Will get the correct result file and output result to output box
+    Parameters: self 
+    returns: none
+    """
+    def process_result(self):
+        result_counter = 0 
+        #Will cound number of results file in case there are more than one result file
+        for filename in os.listdir("AppData/"):
+            if filename.startswith("result"):
+                result_counter += 1
+
+        #Will get the latest version of the results from AppData folder
+        if(result_counter == 0):
+            filename = f"AppData/result.txt"
+        else:
+            result_counter -= 1 
+            if(result_counter == 0):
+                filename = f"AppData/result.txt"
+            else:
+                filename = f"AppData/result{result_counter}.txt"
+
+        #Will open the results file and output results in the correct order
+        with open(filename, "r") as result:
+            for idx, data in enumerate(result):
+                if(idx == 1):
+                    self.output.append(f" {data} sec")
+                else:
+                    self.output.append(f" Password: {data}")
     
     """
     Name: brute_force_cpu
@@ -81,8 +113,6 @@ class BruteForceWorker(QRunnable):
     
         for idx,i in enumerate(range(self.core_count)):
             starting_point = data[i][0]
-
-            print(starting_point)
             
             dictionary = BruteForce(self.attack_options, starting_point, self.charset ,self.found)
 
@@ -332,30 +362,6 @@ class MarkovWorker(QRunnable):
     def run(self):
         pass
 
-
-"""
-Class Name: AttackOptions
-Class Description: Storage class to store all attack parameters.
-Parameters: None
-"""
-class AttackOptions:
-    def __init__(self, name):
-        self.name = name
-        self.hash_value = ""
-        self.hash_type = ""
-        self.attack_type = ""
-        self.wordlist_location = ""
-        self.hash_file_location = ""
-        self.charsetAll = False
-        self.charsetLower = False
-        self.charsetUpper = False
-        self.charsetNumbers = False
-        self.charsetSymbols = False
-        self.cpu = False
-        self.gpu = False
-        self.core_count = 1
-        self.pass_phrase_len = 0
-        self.max_brute_force = 0
 
 """
 Class Name: Ui_App
@@ -932,14 +938,14 @@ class Ui_App(object):
                 if(self.attack_options.charsetAll):
                     character_set = self.numeric + self.lower_alpha + self.upper_alpha + self.symbols
                 elif(self.attack_options.charsetLower):
-                    character_set = self.lower_alpha
+                    character_set = character_set + self.lower_alpha
                 elif(self.attack_options.charsetUpper):
-                    character_set = self.upper_alpha
+                    character_set = character_set + self.upper_alpha
                 elif(self.attack_options.charsetNumbers):
-                    character_set = self.numeric
+                    character_set = character_set + self.numeric
                 elif(self.attack_options.charsetSymbols):
-                    character_set = self.symbols
-                else:
+                    character_set = character_set + self.symbols
+                else: 
                     self.output.append("Please Select at least 1 character set to start a Brute Force attack")
                 
                 #Creates another thread for the attack to run on to prevent application freezing

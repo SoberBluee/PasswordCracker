@@ -31,7 +31,7 @@ class DicionaryAttack():
     Parameters: self, num:Integer, password:String
     returns: none
     """
-    def recurse_filename(self,num, password):
+    def recurse_filename(self, num, password):
         try:
             new_filename = f"AppData/result{num}.txt"
             with open(new_filename, "x") as result:
@@ -73,7 +73,7 @@ class DicionaryAttack():
         
         for passwd in self.data:
             passwd = passwd.rstrip()
-            passwd = passwd.encode('utf-8')
+            passwd = passwd.encode('UTF-8')
             
             hash_algorithm = self.get_hashing_algorithm()
             hash_algorithm.update(passwd)
@@ -82,17 +82,14 @@ class DicionaryAttack():
             
             # print(f"{hash}:{self.hash_to_crack}")
             if(hash == self.hash_to_crack):
-                ##return data back to main window to be outputted to output box
+                #return data back to main window to be outputted to output box
                 print(f"found password: {passwd}")
                 end = time.time()
                 self.time = end-start
                 print(f'{self.time:.4f} seconds')
-                
-            
+                #output result to file and terminate cpus
                 self.save_output(passwd)
-
                 self.found.set()
-
 
             self.passwords_tried+=1;
     """
@@ -102,7 +99,7 @@ class DicionaryAttack():
     #returns: output: String
     """
     def main(self):
-        print("-Start Dictionary-")
+        print("- Start Dictionary -")
         
         self.dictionary_attack()
         print(str(self.password) + ":" + str(self.passwords_tried) + str(self.time))
