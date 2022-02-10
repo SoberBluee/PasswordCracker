@@ -1,27 +1,30 @@
 
 import multiprocessing as mp
 import hashlib
-import itertools
-import queue
 import time
-from itertools import cycle
 
 class BruteForce():
-
-    #Name: __init__
-    #Description: Initializes multi-processing data 
-    #Parameters: self, AttackOptions: Object
-    #returns: none
+    
+    """
+    Name: __init__
+    Description: Initializes multi-processing data 
+    Parameters: self, AttackOptions: Object
+    returns: none
+    """
     def __init__(self, AttackOptions, starting_point, charset, found):
+        #Process parameters
         self.attack_options = AttackOptions
         self.starting_point = starting_point
         self.charset = charset
-        self.charset_len = len(charset)
-        # self.charset = self.charset.split("")
-        self.starting_point = self.get_charset_starting_point()
         self.found = found
+
+        #define more variables
+        self.charset_len = len(charset)
+        self.hash_to_crack = self.attack_options.hash_value.lower() #################could break
+        self.starting_point = self.get_charset_starting_point()
         self.password_set = False
 
+        #Timing variables
         self.start = 0.0
         self.end = 0.0
         self.time = 0.0
@@ -63,10 +66,9 @@ class BruteForce():
         except FileExistsError:
             self.recurse_filename(num+1, password)
         
-
     """
     Name: saveOutput
-    Description: Get the hashing algorithm using a string
+    Description:Will save the output to a file and will change filename if already exists
     Parameters: self
     returns: hashing algorithm
     """
@@ -85,61 +87,69 @@ class BruteForce():
     """
     Name: crack
     Description: Will attempt to crack passwords up to a given length
-    Parameters: self, len:Integer (length of password to crack), password:String (password to check against), hash_to_crack:String
+    Parameters: self, len:Integer (length of password to crack), password:String (password to check against)
     returns: idx:Ineter (posistion in the charset)
     """
-    def crack(self, len, password, hash_to_crack):
+    def crack(self, len, password):
         guess = ""
         #If the length is 0 then we have built the full password for that length
         if(len == 0):
-            # print(f"Password: {password}")
+
             hash = password.rstrip()
             hash = hash.encode('UTF-8')
             #hashs the generated password with the given hashing algorithm
             hash_algorithm = self.get_hashing_algorithm()
             hash_algorithm.update(hash)
             hash = hash_algorithm.hexdigest()
-            # password = str(hash, 'UTF-8')
+        
             #Compare passwords to check if it has cracked
-            if(hash == hash_to_crack):
-                
+            if(hash == self.hash_to_crack):
                 print(f"Found Password: {password}")
                 self.end = time.time()
                 self.time = self.end - self.start
                 print('{:.4f} seconds'.format(self.time))
                 self.save_output(password)
-
                 self.found.set()
-
-                
+ 
             return
+
         #Build password using each character from charset
         for i in range(self.starting_point, self.charset_len + self.starting_point):
-            
             #if we reach end of array and have not finished then go back to begnning
             if(i >= self.charset_len):
                 i = i - self.charset_len
-            #build password
-            # print(f"i:{i}")
-            guess = password + self.charset[i]
-            self.crack(len - 1, guess, hash_to_crack)
-            
 
+            #build password
+            guess = password + self.charset[i]
+            self.crack(len - 1, guess)
+            
+    """
+    Name: brute_force
+    Description: Will crack different length passwords starting at 1
+    Parameters: self
+    returns: none
+    """
     def brute_force(self):
-        i = 0
+        #Define starting length
         length = 1
         hash_to_crack = self.attack_options.hash_value.lower()
         self.start = time.time()
-
         if(self.attack_options.max_brute_force == 0):
             while(True):
+                print(f"Length: {length}")
                 self.crack(length, "", hash_to_crack)
                 length+=1
         else:
             while(length != self.attack_options.max_brute_force):
+                print(f"Length: {length}")
                 self.crack(length, "", hash_to_crack)
                 length+=1
-        
+    """
+    Name: main
+    Description: Main function to start brute force attack
+    Parameters: self
+    returns: none
+    """
     def main(self):
         print(" - Starting brute force - ")
         self.brute_force()

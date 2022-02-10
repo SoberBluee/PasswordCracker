@@ -10,7 +10,7 @@ import hashlib
 import time
 import os
 import multiprocessing
-from multiprocessing import Process, Array, Event
+from multiprocessing import Process, Event
 import logging
 import random
 
@@ -19,6 +19,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtWidgets import QFileDialog, QApplication, QWidget
 from PyQt6.QtCore import QObject, QRunnable, QThread, pyqtSignal, Qt, QThreadPool
 from numpy import character
+from AttackAlgorithms.HybridAlgorithm import HybridAttack
 
 #Attack algorithm imports
 from AttackOptions import AttackOptions
@@ -26,7 +27,10 @@ from AttackAlgorithms.BruteForceAlgorithm import BruteForce
 from AttackAlgorithms.DictionaryAttackAlgorithm import DicionaryAttack
 from GUIOptions import Ui_OptionsWindow
 
-logging.basicConfig(filename="log/guiDesign.log", filemode="w", format="'%(name)s -=- %(levelname)s - %(message)s - %(process)s")
+Log_Format = " %(name)s -=- %(levelname)s %(asctime)s - %(message)s - %(process)s"
+
+logging.basicConfig(filename="log/guiDesign.log", filemode="w", format=Log_Format)
+logger = logging.getLogger()
 
 """
 Class Name: BruteForceWorker
@@ -93,7 +97,7 @@ class BruteForceWorker(QRunnable):
 
         #Will open the results file and output results in the correct order
         with open(filename, "r") as result:
-            for idx, data in enumerate(result):
+            for idx, data in enumerate(result): 
                 if(idx == 1):
                     self.output.append(f" {data} sec")
                 else:
@@ -118,10 +122,12 @@ class BruteForceWorker(QRunnable):
 
             #Creating process using the dictionary main function
             p = multiprocessing.Process(target=dictionary.main)
+            p.name(idx)
             self.process_list.append(p)
 
         #Starts processes
         for process in self.process_list:
+            logger.info(f"Starting process{process.name}")
             process.start()
             
         #Wait's until password is found
@@ -165,7 +171,6 @@ class BruteForceWorker(QRunnable):
             logging.info("GPU SELECTED")
             self.output.append(" Using GPU")
             self.brute_force_gpu()
-        
 
 
 """
@@ -188,9 +193,6 @@ class DictionaryWorker(QRunnable):
         self.process_list = list()
         self.data = None
         self.core_count = self.attack_options.core_count
-
-    def data_generator():
-        pass
 
     """"
     Name: split_data
@@ -279,7 +281,6 @@ class DictionaryWorker(QRunnable):
             process.join()
             
         self.process_result()
-        
         self.output.append(" Attack Finished ")
 
         print("Done")
@@ -298,7 +299,7 @@ class DictionaryWorker(QRunnable):
 
     """
     Name: run
-    Description: Starts dictionary attack using process amount with process terminatation(syncronisation)
+    Description: Starts dictionary attack selecting the CPU or GPU
     Parameters: self 
     returns: none
     """
@@ -311,7 +312,153 @@ class DictionaryWorker(QRunnable):
             logging.info("GPU SELECTED")
             self.output.append(" Using GPU")
             self.dictionary_gpu()
+
+class HybridWorker(QRunnable):
+    """"
+    Name: __init__
+    Description: Constructor function Dictionary Worker. 
+    Parameters: self, attack_options: AttackOptions, output: QTextBrowser
+    returns: none
+    """
+    def __init__(self, attack_options, output):
+        super().__init__()
+        self.HYBRID_RULE_DIR = "Rulesets/hybrid_rule/"
+        self.attack_options = attack_options
+        self.output = output
+        self.process_list = list()
+        self.core_count = self.attack_options.core_count
         
+    """"
+    Name: split_data
+    Description: Splits a dictionary into equal sections for processing  
+    Parameters: self 
+    returns: none
+    """
+    def split_data(self):
+        data_to_split = list()
+        start = time.time()
+        #append data using set comprehensions
+        with open(self.attack_options.wordlist_location, encoding="latin-1") as file: 
+            data_to_split = [line for line in file]
+        
+        data = [data_to_split[i::self.core_count] for i in range(self.core_count)] #split up data into chuncks for each process
+        end = time.time()
+        
+        print('Split Data: {:.4f} seconds'.format(end-start))
+        logging.info('Split Data: {:.4f} seconds'.format(end-start))
+        self.output.append(' Split Data: {:.4f} seconds'.format(end-start))
+        
+        return data
+
+    """"
+    Name: get_rules
+    Description: Splits a rule file in equal chunks   
+    Parameters: self 
+    returns: none
+    """
+    def get_rules(self):
+        rules_to_split = list()
+        start = time.time()
+
+        with open("Rulesets\hybrid_rule\hybrid-0-4.rule","r") as file:
+            rules_to_split = [line for line in file]
+
+        rules =  [rules_to_split[i::self.core_count] for i in range(self.core_count)]
+        end = time.time()
+        print('Split rules: {:.4f} seconds'.format(end-start))
+        self.output.append(' Split rules: {:.4f} seconds'.format(end-start))
+
+        return rules
+    
+    """
+    Name: process_result
+    Description: Will get the correct result file and output result to output box
+    Parameters: self 
+    returns: none
+    """
+    def process_result(self):
+        result_counter = 0 
+        #Will cound number of results file in case there are more than one result file
+        for filename in os.listdir("AppData/"):
+            if filename.startswith("result"):
+                result_counter += 1
+
+        #Will get the latest version of the results from AppData folder
+        if(result_counter == 0):
+            filename = f"AppData/result.txt"
+        else:
+            result_counter -= 1 
+            if(result_counter == 0):
+                filename = f"AppData/result.txt"
+            else:
+                filename = f"AppData/result{result_counter}.txt"
+
+        #Will open the results file and output results in the correct order
+        with open(filename, "r") as result:
+            for idx, data in enumerate(result):
+                data = data.rstrip("\n")
+                if(idx == 1):
+                    self.output.append(f" {data} sec")
+                else:
+                    self.output.append(f" Password: {data}")
+    
+    """
+    Name: hybrid_cpu
+    Description: Will start a hybrid attack using the CPU
+    Parameters: self 
+    returns: none
+    """
+    def hybrid_cpu(self):
+        #Split data into chunk for each process
+        data = self.split_data()
+        #process rule file
+        rules = self.get_rules()
+        #found event triggered when password found
+        self.found = Event()
+
+        rules_to_split = list()
+        start = time.time()
+
+        for idx, t in enumerate(range(self.core_count)):
+            dictionary = HybridAttack(self.attack_options, data[idx], rules[idx], self.found)
+            #Creating process using the dictionary main function
+            p = multiprocessing.Process(target=dictionary.main)
+            self.process_list.append(p)
+
+        #Starts processes
+        for process in self.process_list:
+            process.start()
+            
+        #Wait's until password is found
+        self.found.wait()
+
+        #Terminates processes
+        for process in self.process_list:
+            print("Terminating")
+            process.terminate()
+
+        for process in self.process_list:
+            process.join()
+            
+        self.process_result()
+        self.output.append(" Attack Finished ")
+        print("Done")
+
+    """
+    Name: run
+    Description: Starts hybrid attack selecting the CPU or GPU
+    Parameters: self 
+    returns: none
+    """
+    def run(self):
+        if(self.attack_options.cpu):
+            logging.info("CPU SELECTED")
+            self.output.append(" Using CPU")
+            self.hybrid_cpu()
+        elif(self.attack_options.gpu):
+            logging.info("GPU SELECTED")
+            self.output.append(" Using GPU")
+            self.dictionary_gpu()
 
 class RuleBasedWorker(QRunnable):
     def __init__(self, attack_options):
@@ -321,19 +468,6 @@ class RuleBasedWorker(QRunnable):
     def rulebase_cpu(self):
         pass
     def rulebase_gpu(self):
-        pass
-    def run(self):
-        pass
-    
-
-class HybridWorker(QRunnable):
-    def __init__(self, attack_options):
-        pass
-    def split_data(self):
-        pass
-    def hybrid_cpu(self):
-        pass
-    def hybrid_gpu(self):
         pass
     def run(self):
         pass
@@ -899,6 +1033,29 @@ class Ui_App(object):
         self.wordlist_location = wordlist_location[0]
 
     """
+    Name: _process_charset
+    Description: Will process the character set from the attack_options
+    Parameters: self
+    returns: character_set:String
+    """
+    def _process_charset(self):
+        character_set = ""
+        if(self.attack_options.charsetAll):
+            character_set = self.numeric + self.lower_alpha + self.upper_alpha + self.symbols
+        if(self.attack_options.charsetLower):
+            character_set = character_set + self.lower_alpha
+        if(self.attack_options.charsetUpper):
+            character_set = character_set + self.upper_alpha
+        if(self.attack_options.charsetNumbers):
+            character_set = character_set + self.numeric
+        if(self.attack_options.charsetSymbols):
+            character_set = character_set + self.symbols
+        # elif: 
+        #     self.output.append("Please Select at least 1 character set to start a Brute Force attack")
+
+        return character_set
+
+    """
     Name: _crack
     Description: Will start a crack when user hash is provided
     Parameters: self
@@ -934,30 +1091,34 @@ class Ui_App(object):
         if(parameter_check == [True, True, True]):
 
             if(self.attack_options.attack_type == "Brute Force"):
-                character_set = ""
-                if(self.attack_options.charsetAll):
-                    character_set = self.numeric + self.lower_alpha + self.upper_alpha + self.symbols
-                elif(self.attack_options.charsetLower):
-                    character_set = character_set + self.lower_alpha
-                elif(self.attack_options.charsetUpper):
-                    character_set = character_set + self.upper_alpha
-                elif(self.attack_options.charsetNumbers):
-                    character_set = character_set + self.numeric
-                elif(self.attack_options.charsetSymbols):
-                    character_set = character_set + self.symbols
-                else: 
-                    self.output.append("Please Select at least 1 character set to start a Brute Force attack")
-                
                 #Creates another thread for the attack to run on to prevent application freezing
                 pool = QThreadPool.globalInstance()
-                worker = BruteForceWorker(self.attack_options, character_set ,self.output)
+                worker = BruteForceWorker(self.attack_options, self._process_charset() ,self.output)
                 pool.start(worker)
 
             if(self.attack_options.attack_type == "Dictionary"):
-                #Creates another thread for the attack to run on to prevent application freezing
                 pool = QThreadPool.globalInstance()
                 worker = DictionaryWorker(self.attack_options, self.output)
                 pool.start(worker)
+
+            if(self.attack_options.attack_type == "Hybrid"):
+                pool = QThreadPool.globalInstance()
+                worker = HybridWorker(self.attack_options, self.output)
+                pool.start(worker)
+            if(self.attack_options.attack_type == "Rule-Based"):
+                pool = QThreadPool.globalInstance()
+                worker = RuleBasedWorker(self.attack_options, self.output)
+                pool.start()
+            if(self.attack_options.attack_type == "Rainbow Table"):
+                pool = QThreadPool.globalInstance()
+                worker = RainbowTableWorker(self.attack_options, self.output)
+                pool.start()
+            if(self.attack_options.attack_type == "Markov Chain"):
+                pool = QThreadPool.globalInstance()
+                worker = MarkovWorker(self.attack_options, self.output)
+                pool.start()
+
+            
         else:
             print("Cannot start attack")
 

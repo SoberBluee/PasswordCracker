@@ -9,6 +9,7 @@ class DicionaryAttack():
     returns: none
     """
     def __init__(self, attack_options, data, found):
+        self.hash_to_crack = self.attack_options.hash_value.lower()
         self.attack_options = attack_options
         self.data= data
         self.found = found
@@ -69,7 +70,6 @@ class DicionaryAttack():
     """
     def dictionary_attack(self):
         start = time.time()
-        self.hash_to_crack = self.attack_options.hash_value.lower()
         
         for passwd in self.data:
             passwd = passwd.rstrip()

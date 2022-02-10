@@ -1,22 +1,25 @@
+- implement rule base attack
+    1. Create Prefix rulebase (change/alter input work e.g password -> Password)
+    2. apply prefix to input
+    3. create Suffix rulebase (Password -> Password123, added to the end)
+    4. apply suffix rulebase to input
+    5. test password
 
-brute force
-    - make sure all input variables are in the attack_option
-    - make starting point algorithm to have different stasrting points in the charset
-    - recursive brute force 
+-hybrid attack
+    change hybrid attack rules to multiple files
 
-start with recursive brute force
-    - try and kill the thread when found 
-    - if not try to implement itterative approach 
+remove any instance of gpu from report
+    - diagrams
+    - text 
+    - gui
 
 start unit testing instead to show testing better
 
-implement hash detector
+- implement hash detector
 
-
-- need to test dictionary attack    
+- need to test dictionary attack
+- need to test brute force attack    
 
 #Needs to be polished
 \- allow user to load previous attack
 
-#installewd cuda on anaconda
-need to experiment with it
