@@ -13,24 +13,34 @@ import multiprocessing
 from multiprocessing import Process, Event
 import logging
 import random
+import unittest
 
 #PyQt6 imports
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtWidgets import QFileDialog, QApplication, QWidget
 from PyQt6.QtCore import QObject, QRunnable, QThread, pyqtSignal, Qt, QThreadPool
-from numpy import character
-from AttackAlgorithms.HybridAlgorithm import HybridAttack
 
 #Attack algorithm imports
-from AttackOptions import AttackOptions
-from AttackAlgorithms.BruteForceAlgorithm import BruteForce 
-from AttackAlgorithms.DictionaryAttackAlgorithm import DicionaryAttack
 from GUIOptions import Ui_OptionsWindow
+from AttackOptions import AttackOptions
+from AttackAlgorithms.BruteForceAttackAlgorithm import BruteForceAttackAlgorithm 
+from AttackAlgorithms.DictionaryAttackAlgorithm import DicionaryAttackAlgorithm
+from AttackAlgorithms.HybridAttackAlgorithm import HybridAttackAlgorithm
+from AttackAlgorithms.RulebasedAttackAlgorithm import RulebasedAttackAlgorithm
+from AttackAlgorithms.RainbowtableAttackAlgorithm import RainbowtableAttackAlgorithm
+from AttackAlgorithms.MarkovAttackAlgorithm import MarkovAttackAlgorithm
 
 Log_Format = " %(name)s -=- %(levelname)s %(asctime)s - %(message)s - %(process)s"
 
 logging.basicConfig(filename="log/guiDesign.log", filemode="w", format=Log_Format)
 logger = logging.getLogger()
+
+# class Test_GUI(unittest.TestCase):
+#     def split_data_test(self, core_count ):
+#         self.assertEquals(len(BruteForceWorker.split_data()), core_count)
+        
+
+
 
 """
 Class Name: BruteForceWorker
@@ -115,21 +125,20 @@ class BruteForceWorker(QRunnable):
         #found event triggered when password found
         self.found = Event()
     
-        for idx,i in enumerate(range(self.core_count)):
+        for idx ,i in enumerate(range(self.core_count)):
             starting_point = data[i][0]
             
-            dictionary = BruteForce(self.attack_options, starting_point, self.charset ,self.found)
+            dictionary = BruteForceAttackAlgorithm(self.attack_options, starting_point, self.charset ,self.found)
 
             #Creating process using the dictionary main function
             p = multiprocessing.Process(target=dictionary.main)
-            p.name(idx)
             self.process_list.append(p)
 
         #Starts processes
         for process in self.process_list:
             logger.info(f"Starting process{process.name}")
             process.start()
-            
+
         #Wait's until password is found
         self.found.wait()
 
@@ -145,16 +154,15 @@ class BruteForceWorker(QRunnable):
         
         self.output.append(" Attack Finished ")
 
+        # Test_GUI.split_data_test(self,self.attack_options.core_count)
+
         print("Done")
     
-    """
-    Name: brute_force_gpu
-    Description: Will start a brute force attack using the GPU
-    Parameters: self 
-    returns: none
-    """
-    def brute_force_gpu(self):
-        pass
+    def stop_process(self):
+        #Terminates processes
+        for process in self.process_list:
+            print("Terminating")
+            process.terminate()
     
     """
     Name: run
@@ -167,10 +175,6 @@ class BruteForceWorker(QRunnable):
             logging.info("CPU SELECTED")
             self.output.append(" Using CPU")
             self.brute_force_cpu()
-        elif(self.attack_options.gpu):
-            logging.info("GPU SELECTED")
-            self.output.append(" Using GPU")
-            self.brute_force_gpu()
 
 
 """
@@ -188,8 +192,10 @@ class DictionaryWorker(QRunnable):
     """
     def __init__(self, attack_options, output):
         super().__init__()
+        #Parameter
         self.attack_options = attack_options
         self.output = output
+    
         self.process_list = list()
         self.data = None
         self.core_count = self.attack_options.core_count
@@ -260,7 +266,7 @@ class DictionaryWorker(QRunnable):
         self.found = Event()
        
         for idx,t in enumerate(range(self.core_count)):
-            dictionary = DicionaryAttack(self.attack_options, data[idx], self.found)
+            dictionary = DicionaryAttackAlgorithm(self.attack_options, data[idx], self.found)
             #Creating process using the dictionary main function
             p = multiprocessing.Process(target=dictionary.main)
             self.process_list.append(p)
@@ -271,35 +277,51 @@ class DictionaryWorker(QRunnable):
             
         #Wait's until password is found
         self.found.wait()
+    
 
-        #Terminates processes
-        for process in self.process_list:
-            print("Terminating")
-            process.terminate()
+        [process.termiante() for process in self.process_list]
+        # #Terminates processes
+        # for process in self.process_list:
+        #     print("Terminating")
+        #     process.terminate()
 
-        for process in self.process_list:
-            process.join()
+        [process.join() for process in self.process_list]
+        # for process in self.process_list:
+        #     process.join()
             
         self.process_result()
         self.output.append(" Attack Finished ")
 
         print("Done")
-       
-    
+
     """
-    Name: dictionary_gpu
-    Description: Will start a dictionary attack using the GPU
+    Name: stop_process
+    Description: Will terminate all processes when stop button is pressesd
     Parameters: self 
     returns: none
     """
-    def dictionary_gpu(self):
-        print("dictionary_gpu")
-
-        #start gpu attack
+    def stop_process(self):
+        #Terminates processes
+        for process in self.process_list:
+            print("Terminating")
+            process.terminate()
 
     """
+    Name: pause_process
+    Description: Will pause an on going process
+    Parameters: self 
+    returns: none
+    """
+    def pause_process(self):
+        # time.sleep(10)
+        print("Sleeping")
+        for process in self.process_list:
+            pass
+        
+       
+    """
     Name: run
-    Description: Starts dictionary attack selecting the CPU or GPU
+    Description: Starts dictionary attack selecting the CPU
     Parameters: self 
     returns: none
     """
@@ -308,10 +330,6 @@ class DictionaryWorker(QRunnable):
             logging.info("CPU SELECTED")
             self.output.append(" Using CPU")
             self.dictionary_cpu()
-        elif(self.attack_options.gpu):
-            logging.info("GPU SELECTED")
-            self.output.append(" Using GPU")
-            self.dictionary_gpu()
 
 class HybridWorker(QRunnable):
     """"
@@ -343,7 +361,7 @@ class HybridWorker(QRunnable):
         
         data = [data_to_split[i::self.core_count] for i in range(self.core_count)] #split up data into chuncks for each process
         end = time.time()
-        
+        self.assertEquals(len(data) == self.core_count, "Data should be split equally")
         print('Split Data: {:.4f} seconds'.format(end-start))
         logging.info('Split Data: {:.4f} seconds'.format(end-start))
         self.output.append(' Split Data: {:.4f} seconds'.format(end-start))
@@ -420,7 +438,7 @@ class HybridWorker(QRunnable):
         start = time.time()
 
         for idx, t in enumerate(range(self.core_count)):
-            dictionary = HybridAttack(self.attack_options, data[idx], rules[idx], self.found)
+            dictionary = HybridAttackAlgorithm(self.attack_options, data[idx], rules[idx], self.found)
             #Creating process using the dictionary main function
             p = multiprocessing.Process(target=dictionary.main)
             self.process_list.append(p)
@@ -444,9 +462,15 @@ class HybridWorker(QRunnable):
         self.output.append(" Attack Finished ")
         print("Done")
 
+    def stop_process(self):
+        #Terminates processes
+        for process in self.process_list:
+            print("Terminating")
+            process.terminate()
+
     """
     Name: run
-    Description: Starts hybrid attack selecting the CPU or GPU
+    Description: Starts hybrid attack selecting the CPU
     Parameters: self 
     returns: none
     """
@@ -455,48 +479,38 @@ class HybridWorker(QRunnable):
             logging.info("CPU SELECTED")
             self.output.append(" Using CPU")
             self.hybrid_cpu()
-        elif(self.attack_options.gpu):
-            logging.info("GPU SELECTED")
-            self.output.append(" Using GPU")
-            self.dictionary_gpu()
+
 
 class RuleBasedWorker(QRunnable):
-    def __init__(self, attack_options):
+    def __init__(self, attack_options, output):
+
         pass
     def split_data(self):
         pass
     def rulebase_cpu(self):
         pass
-    def rulebase_gpu(self):
-        pass
     def run(self):
         pass
 
 class RainbowTableWorker(QRunnable):
-    def __init__(self, attack_options):
+    def __init__(self, attack_options, output):
         pass
     def split_data(self):
         pass
     def rainbowtable_cpu(self):
         pass
-    def rainbowtable_gpu(self):
-        pass
     def run(self):
         pass
 
 class MarkovWorker(QRunnable):
-    def __init__(self, attack_options):
+    def __init__(self, attack_options, output):
         pass
     def split_data(self):
         pass
     def markov_cpu(self):
         pass
-    def markov_gpu(self):
-        pass
     def run(self):
         pass
-
-
 """
 Class Name: Ui_App
 Class Description: Main window for application
@@ -511,16 +525,19 @@ class Ui_App(object):
     """
     def __init__(self):
         super().__init__()    
+        #Object Initialization 
         attack_options = AttackOptions("attack1")
         self.options = Ui_OptionsWindow(attack_options)
+        #Combo box Initialization
         self.hash_type_content = hashlib.algorithms_guaranteed
         self.attack_type_content = ["Brute Force", "Dictionary", "Hybrid", "Rule-Based", "Rainbow Table", "Markov Chain"]
+        #Attack option Initialization
         self.lower_alpha = "abcdefghijklmnopqrstuvwxyz"
         self.upper_alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         self.numeric = "1234567890"
         self.symbols = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ '
-        self.hash_file_location = ""
         self.all_charset = self.lower_alpha + self.upper_alpha + self.numeric + self.symbols
+        self.hash_file_location = ""
 
     """"
     Name: setupUi
@@ -544,8 +561,8 @@ class Ui_App(object):
         App.setPalette(palette)
         self.centralwidget = QtWidgets.QWidget(App)
         self.centralwidget.setObjectName("centralwidget")
-        self.attack = QtWidgets.QGroupBox(self.centralwidget)
-        self.attack.setGeometry(QtCore.QRect(10, 10, 991, 561))
+        self.attackGroup = QtWidgets.QGroupBox(self.centralwidget)
+        self.attackGroup.setGeometry(QtCore.QRect(10, 10, 991, 561))
         palette = QtGui.QPalette()
         brush = QtGui.QBrush(QtGui.QColor(0, 120, 215))
         brush.setStyle(QtCore.Qt.BrushStyle.SolidPattern)
@@ -556,29 +573,29 @@ class Ui_App(object):
         brush = QtGui.QBrush(QtGui.QColor(0, 120, 215))
         brush.setStyle(QtCore.Qt.BrushStyle.SolidPattern)
         palette.setBrush(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Highlight, brush)
-        self.attack.setPalette(palette)
+        self.attackGroup.setPalette(palette)
         font = QtGui.QFont()
         font.setPointSize(14)
-        self.attack.setFont(font)
-        self.attack.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.attack.setObjectName("attack")
-        self.hashValueLbl = QtWidgets.QLabel(self.attack)
+        self.attackGroup.setFont(font)
+        self.attackGroup.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.attackGroup.setObjectName("attackGroup")
+        self.hashValueLbl = QtWidgets.QLabel(self.attackGroup)
         self.hashValueLbl.setGeometry(QtCore.QRect(10, 30, 61, 21))
         font = QtGui.QFont()
         font.setPointSize(16)
         self.hashValueLbl.setFont(font)
         self.hashValueLbl.setObjectName("hashValueLbl")
-        self.hashInputTxt = QtWidgets.QTextEdit(self.attack)
+        self.hashInputTxt = QtWidgets.QTextEdit(self.attackGroup)
         self.hashInputTxt.setGeometry(QtCore.QRect(70, 30, 811, 31))
         font = QtGui.QFont()
         font.setPointSize(10)
         self.hashInputTxt.setFont(font)
         self.hashInputTxt.setObjectName("hashInputTxt")
-        self.crackBtn = QtWidgets.QPushButton(self.attack)
+        self.crackBtn = QtWidgets.QPushButton(self.attackGroup)
         self.crackBtn.setGeometry(QtCore.QRect(10, 360, 101, 31))
         self.crackBtn.setObjectName("crackBtn")
-        self.deviceFrame = QtWidgets.QFrame(self.attack)
-        self.deviceFrame.setGeometry(QtCore.QRect(10, 230, 101, 121))
+        self.deviceFrame = QtWidgets.QFrame(self.attackGroup)
+        self.deviceFrame.setGeometry(QtCore.QRect(10, 270, 101, 81))
         palette = QtGui.QPalette()
         brush = QtGui.QBrush(QtGui.QColor(0, 120, 215))
         brush.setStyle(QtCore.Qt.BrushStyle.SolidPattern)
@@ -602,10 +619,7 @@ class Ui_App(object):
         self.cpu_enabled = QtWidgets.QRadioButton(self.deviceFrame)
         self.cpu_enabled.setGeometry(QtCore.QRect(20, 40, 71, 20))
         self.cpu_enabled.setObjectName("cpu_enabled")
-        self.gpu_enabled = QtWidgets.QRadioButton(self.deviceFrame)
-        self.gpu_enabled.setGeometry(QtCore.QRect(20, 70, 71, 20))
-        self.gpu_enabled.setObjectName("gpu_enabled")
-        self.charsetFrame = QtWidgets.QFrame(self.attack)
+        self.charsetFrame = QtWidgets.QFrame(self.attackGroup)
         self.charsetFrame.setGeometry(QtCore.QRect(770, 70, 211, 151))
         palette = QtGui.QPalette()
         brush = QtGui.QBrush(QtGui.QColor(0, 120, 215))
@@ -643,7 +657,7 @@ class Ui_App(object):
         self.charsetSymbols = QtWidgets.QCheckBox(self.charsetFrame)
         self.charsetSymbols.setGeometry(QtCore.QRect(10, 120, 151, 20))
         self.charsetSymbols.setObjectName("charsetSymbols")
-        self.wordlistFrame = QtWidgets.QFrame(self.attack)
+        self.wordlistFrame = QtWidgets.QFrame(self.attackGroup)
         self.wordlistFrame.setEnabled(True)
         self.wordlistFrame.setGeometry(QtCore.QRect(390, 70, 371, 151))
         palette = QtGui.QPalette()
@@ -677,9 +691,9 @@ class Ui_App(object):
         self.browseBtn.setGeometry(QtCore.QRect(10, 80, 111, 31))
         self.browseBtn.setObjectName("browseBtn")
         self.wordlistFilenameLbl = QtWidgets.QLabel(self.wordlistFrame)
-        self.wordlistFilenameLbl.setGeometry(QtCore.QRect(10, 120, 351, 16))
+        self.wordlistFilenameLbl.setGeometry(QtCore.QRect(10, 120, 351, 31))
         self.wordlistFilenameLbl.setObjectName("wordlistFilenameLbl")
-        self.attacktypeFrame = QtWidgets.QFrame(self.attack)
+        self.attacktypeFrame = QtWidgets.QFrame(self.attackGroup)
         self.attacktypeFrame.setGeometry(QtCore.QRect(200, 70, 181, 151))
         palette = QtGui.QPalette()
         brush = QtGui.QBrush(QtGui.QColor(0, 120, 215))
@@ -702,12 +716,12 @@ class Ui_App(object):
         self.attackTypeLbl.setGeometry(QtCore.QRect(40, 10, 101, 21))
         self.attackTypeLbl.setObjectName("attackTypeLbl")
         self.attackTypeCombo = QtWidgets.QComboBox(self.attacktypeFrame)
-        self.attackTypeCombo.setGeometry(QtCore.QRect(10, 40, 161, 22))
+        self.attackTypeCombo.setGeometry(QtCore.QRect(10, 40, 161, 31))
         self.attackTypeCombo.setObjectName("attackTypeCombo")
         self.attackOptionsBtn = QtWidgets.QPushButton(self.attacktypeFrame)
-        self.attackOptionsBtn.setGeometry(QtCore.QRect(10, 70, 161, 31))
+        self.attackOptionsBtn.setGeometry(QtCore.QRect(10, 100, 161, 41))
         self.attackOptionsBtn.setObjectName("attackOptionsBtn")
-        self.hashTypeFrame = QtWidgets.QFrame(self.attack)
+        self.hashTypeFrame = QtWidgets.QFrame(self.attackGroup)
         self.hashTypeFrame.setGeometry(QtCore.QRect(10, 70, 181, 151))
         palette = QtGui.QPalette()
         brush = QtGui.QBrush(QtGui.QColor(0, 120, 215))
@@ -730,31 +744,31 @@ class Ui_App(object):
         self.hashTypeLbl.setGeometry(QtCore.QRect(40, 10, 91, 21))
         self.hashTypeLbl.setObjectName("hashTypeLbl")
         self.hashTypeCombo = QtWidgets.QComboBox(self.hashTypeFrame)
-        self.hashTypeCombo.setGeometry(QtCore.QRect(10, 40, 161, 22))
+        self.hashTypeCombo.setGeometry(QtCore.QRect(10, 40, 161, 31))
         self.hashTypeCombo.setObjectName("hashTypeCombo")
         self.detectHashBtn = QtWidgets.QPushButton(self.hashTypeFrame)
-        self.detectHashBtn.setGeometry(QtCore.QRect(10, 70, 161, 31))
+        self.detectHashBtn.setGeometry(QtCore.QRect(10, 100, 161, 41))
         self.detectHashBtn.setObjectName("detectHashBtn")
-        self.output = QtWidgets.QTextBrowser(self.attack)
+        self.output = QtWidgets.QTextBrowser(self.attackGroup)
         self.output.setGeometry(QtCore.QRect(120, 230, 861, 321))
         self.output.setObjectName("output")
-        self.optionBtn = QtWidgets.QPushButton(self.attack)
-        self.optionBtn.setGeometry(QtCore.QRect(10, 520, 101, 31))
-        self.optionBtn.setObjectName("optionBtn")
-        self.passwordFileBtn = QtWidgets.QPushButton(self.attack)
+        self.passwordFileBtn = QtWidgets.QPushButton(self.attackGroup)
         self.passwordFileBtn.setGeometry(QtCore.QRect(890, 30, 91, 31))
         self.passwordFileBtn.setObjectName("passwordFileBtn")
-        self.pauseBtn = QtWidgets.QPushButton(self.attack)
-        self.pauseBtn.setGeometry(QtCore.QRect(10, 400, 101, 31))
+        self.pauseBtn = QtWidgets.QPushButton(self.attackGroup)
+        self.pauseBtn.setGeometry(QtCore.QRect(10, 440, 101, 31))
         self.pauseBtn.setObjectName("pauseBtn")
-        self.resumeBtn = QtWidgets.QPushButton(self.attack)
-        self.resumeBtn.setGeometry(QtCore.QRect(10, 440, 101, 31))
+        self.resumeBtn = QtWidgets.QPushButton(self.attackGroup)
+        self.resumeBtn.setGeometry(QtCore.QRect(10, 480, 101, 31))
         self.resumeBtn.setObjectName("resumeBtn")
-        self.saveBtn = QtWidgets.QPushButton(self.attack)
-        self.saveBtn.setGeometry(QtCore.QRect(10, 480, 101, 31))
+        self.saveBtn = QtWidgets.QPushButton(self.attackGroup)
+        self.saveBtn.setGeometry(QtCore.QRect(10, 520, 101, 31))
         self.saveBtn.setObjectName("saveBtn")
-        self.newattack = QtWidgets.QGroupBox(self.centralwidget)
-        self.newattack.setGeometry(QtCore.QRect(10, 580, 621, 71))
+        self.stopBtn = QtWidgets.QPushButton(self.attackGroup)
+        self.stopBtn.setGeometry(QtCore.QRect(10, 400, 101, 31))
+        self.stopBtn.setObjectName("stopBtn")
+        self.newAttackGroup = QtWidgets.QGroupBox(self.centralwidget)
+        self.newAttackGroup.setGeometry(QtCore.QRect(10, 580, 621, 71))
         palette = QtGui.QPalette()
         brush = QtGui.QBrush(QtGui.QColor(0, 120, 215))
         brush.setStyle(QtCore.Qt.BrushStyle.SolidPattern)
@@ -765,28 +779,28 @@ class Ui_App(object):
         brush = QtGui.QBrush(QtGui.QColor(0, 120, 215))
         brush.setStyle(QtCore.Qt.BrushStyle.SolidPattern)
         palette.setBrush(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Highlight, brush)
-        self.newattack.setPalette(palette)
+        self.newAttackGroup.setPalette(palette)
         font = QtGui.QFont()
         font.setPointSize(14)
-        self.newattack.setFont(font)
-        self.newattack.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.newattack.setObjectName("newattack")
-        self.newAttackNameLbl = QtWidgets.QLabel(self.newattack)
+        self.newAttackGroup.setFont(font)
+        self.newAttackGroup.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.newAttackGroup.setObjectName("newAttackGroup")
+        self.newAttackNameLbl = QtWidgets.QLabel(self.newAttackGroup)
         self.newAttackNameLbl.setGeometry(QtCore.QRect(10, 30, 81, 21))
         font = QtGui.QFont()
         font.setPointSize(16)
         self.newAttackNameLbl.setFont(font)
         self.newAttackNameLbl.setObjectName("newAttackNameLbl")
-        self.newAttackNameTxt = QtWidgets.QTextEdit(self.newattack)
+        self.newAttackNameTxt = QtWidgets.QTextEdit(self.newAttackGroup)
         self.newAttackNameTxt.setGeometry(QtCore.QRect(80, 30, 311, 31))
         font = QtGui.QFont()
         font.setPointSize(10)
         self.newAttackNameTxt.setFont(font)
         self.newAttackNameTxt.setObjectName("newAttackNameTxt")
-        self.createNewAttackBtn = QtWidgets.QPushButton(self.newattack)
+        self.createNewAttackBtn = QtWidgets.QPushButton(self.newAttackGroup)
         self.createNewAttackBtn.setGeometry(QtCore.QRect(510, 30, 101, 31))
         self.createNewAttackBtn.setObjectName("createNewAttackBtn")
-        self.loadNewAttackBtn = QtWidgets.QPushButton(self.newattack)
+        self.loadNewAttackBtn = QtWidgets.QPushButton(self.newAttackGroup)
         self.loadNewAttackBtn.setGeometry(QtCore.QRect(400, 30, 101, 31))
         self.loadNewAttackBtn.setObjectName("loadNewAttackBtn")
         App.setCentralWidget(self.centralwidget)
@@ -822,13 +836,13 @@ class Ui_App(object):
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuAttack.menuAction())
         self.menubar.addAction(self.menuAbout.menuAction())
-    
+
         #Initialize combo boxes
         self._initComboBox()
 
         #Creating all button click events
         self.crackBtn.clicked.connect(self._crack)
-        self.optionBtn.clicked.connect(self._options)
+        self.attackOptionsBtn.clicked.connect(self._options)
         self.detectHashBtn.clicked.connect(self._detect)
         self.createNewAttackBtn.clicked.connect(self._createNewAttack)
         self.loadNewAttackBtn.clicked.connect(self._load)
@@ -837,6 +851,7 @@ class Ui_App(object):
         self.pauseBtn.clicked.connect(self._pause)
         self.resumeBtn.clicked.connect(self._resume)
         self.saveBtn.clicked.connect(self._save)
+        self.stopBtn.clicked.connect(self._stop)
 
         #On a combo box change, call _alterFrame
         self.attackTypeCombo.currentIndexChanged.connect(self._alterFrame) 
@@ -844,16 +859,13 @@ class Ui_App(object):
         self.retranslateUi(App)
         QtCore.QMetaObject.connectSlotsByName(App)
 
-    """"
-    Name: retranslateUi
-    Description: Will initialize all UI elements with text and tooltips
-    Parameters: App:QMainWindows 
-    returns: none
-    """
+        self.retranslateUi(App)
+        QtCore.QMetaObject.connectSlotsByName(App)
+
     def retranslateUi(self, App):
         _translate = QtCore.QCoreApplication.translate
-        App.setWindowTitle(_translate("App", "Password Cracker"))
-        self.attack.setTitle(_translate("App", "Hash Attack 1"))
+        App.setWindowTitle(_translate("App", "MainWindow"))
+        self.attackGroup.setTitle(_translate("App", "Hash Attack 1"))
         self.hashValueLbl.setText(_translate("App", "Hash"))
         self.hashInputTxt.setToolTip(_translate("App", "Hash value you want to crack."))
         self.crackBtn.setToolTip(_translate("App", "Start attack."))
@@ -861,8 +873,6 @@ class Ui_App(object):
         self.deviceLbl.setText(_translate("App", "Device"))
         self.cpu_enabled.setToolTip(_translate("App", "Use multi-threading / multi-processing to crack the password"))
         self.cpu_enabled.setText(_translate("App", "CPU"))
-        self.gpu_enabled.setToolTip(_translate("App", "Use multi-threading on the GPU to crack the password"))
-        self.gpu_enabled.setText(_translate("App", "GPU"))
         self.charsetLbl.setText(_translate("App", "Charset"))
         self.charsetAll.setText(_translate("App", "All"))
         self.charsetLower.setText(_translate("App", "Lower Alpha (a-z)"))
@@ -880,8 +890,6 @@ class Ui_App(object):
         self.hashTypeCombo.setToolTip(_translate("App", "The hashing algorithm of the provided hash value."))
         self.detectHashBtn.setToolTip(_translate("App", "Auto detect the hashing algorithm for a hash value."))
         self.detectHashBtn.setText(_translate("App", "Detect"))
-        self.optionBtn.setToolTip(_translate("App", "Application options."))
-        self.optionBtn.setText(_translate("App", "Options"))
         self.passwordFileBtn.setToolTip(_translate("App", "Upload multiple passwords in a file to crack."))
         self.passwordFileBtn.setText(_translate("App", "PWD File"))
         self.pauseBtn.setToolTip(_translate("App", "Pause an attack"))
@@ -889,7 +897,9 @@ class Ui_App(object):
         self.resumeBtn.setToolTip(_translate("App", "Resume attack"))
         self.resumeBtn.setText(_translate("App", "Resume"))
         self.saveBtn.setText(_translate("App", "Save"))
-        self.newattack.setTitle(_translate("App", "Create New Attack"))
+        self.stopBtn.setToolTip(_translate("App", "Start attack."))
+        self.stopBtn.setText(_translate("App", "Stop"))
+        self.newAttackGroup.setTitle(_translate("App", "Create New Attack"))
         self.newAttackNameLbl.setText(_translate("App", "Name: "))
         self.newAttackNameTxt.setToolTip(_translate("App", "Name of a new attack"))
         self.createNewAttackBtn.setToolTip(_translate("App", "Create new attack."))
@@ -913,6 +923,8 @@ class Ui_App(object):
         self.actionpaste.setShortcut(_translate("App", "Ctrl+S"))
         self.actionLoad.setText(_translate("App", "Load"))
         self.actionSave_2.setText(_translate("App", "Save"))
+
+
     """
     Name: _alterFrame
     Description: Will disable frames depending on the attack type selected
@@ -998,7 +1010,6 @@ class Ui_App(object):
         self.hashTypeCombo.addItems(self.hash_type_content)
         self.attackTypeCombo.setPlaceholderText("Select Attack")
         self.attackTypeCombo.addItems(self.attack_type_content)
-    
 
     """
     Name: _browsePasswordFile
@@ -1034,7 +1045,7 @@ class Ui_App(object):
 
     """
     Name: _process_charset
-    Description: Will process the character set from the attack_options
+    Description: Will process the character set for the attack_options
     Parameters: self
     returns: character_set:String
     """
@@ -1078,47 +1089,87 @@ class Ui_App(object):
         self.attack_options.charsetNumbers = self.charsetNumbers.isChecked()
         self.attack_options.charsetSymbols = self.charsetSymbols.isChecked()
         self.attack_options.cpu = self.cpu_enabled.isChecked()
-        self.attack_options.gpu = self.gpu_enabled.isChecked()
         self.attack_options.core_count = self.options.attack_options.core_count
-        self.output.append(" Starting Attack ")
-        self.output.append(f"       - Hash: {self.attack_options.hash_value}")
-        self.output.append(f"       - Type: {self.attack_options.hash_type}")
-        self.output.append(f"       - Attack: {self.attack_options.attack_type}")
-        self.output.append(f"       - Wordlist: {self.attack_options.wordlist_location}")
-        self.output.append(f"       - Processes: {self.attack_options.core_count}")
         
         parameter_check = self._check_parameters()
         if(parameter_check == [True, True, True]):
-
             if(self.attack_options.attack_type == "Brute Force"):
+                charset = self._process_charset()
+                self.output.append(" Starting Attack ")
+                self.output.append(f"       - Hash: {self.attack_options.hash_value}")
+                self.output.append(f"       - Type: {self.attack_options.hash_type}")
+                self.output.append(f"       - Attack: {self.attack_options.attack_type}")
+                self.output.append(f"       - Wordlist: {self.attack_options.wordlist_location}")
+                self.output.append(f"       - Charset: '{charset}'")
+                self.output.append(f"       - Processes: {self.attack_options.core_count}")
+                self.output.append(f"       - Max len: {self.attack_options.max_brute_force}")
+
                 #Creates another thread for the attack to run on to prevent application freezing
                 pool = QThreadPool.globalInstance()
-                worker = BruteForceWorker(self.attack_options, self._process_charset() ,self.output)
-                pool.start(worker)
-
+                self.worker = BruteForceWorker(self.attack_options, charset, self.output)
+                pool.start(self.worker)
+            
             if(self.attack_options.attack_type == "Dictionary"):
+                self.output.append(f" -= Starting {self.attack_options.name} =- ")
+                self.output.append(f"       - Hash: {self.attack_options.hash_value}")
+                self.output.append(f"       - Type: {self.attack_options.hash_type}")
+                self.output.append(f"       - Attack: {self.attack_options.attack_type}")
+                self.output.append(f"       - Wordlist: {self.attack_options.wordlist_location}")
+                
                 pool = QThreadPool.globalInstance()
-                worker = DictionaryWorker(self.attack_options, self.output)
-                pool.start(worker)
+                self.worker = DictionaryWorker(self.attack_options, self.output)
+                pool.start(self.worker)
 
             if(self.attack_options.attack_type == "Hybrid"):
+                self.output.append(" Starting Attack ")
+                self.output.append(f"       - Hash: {self.attack_options.hash_value}")
+                self.output.append(f"       - Type: {self.attack_options.hash_type}")
+                self.output.append(f"       - Attack: {self.attack_options.attack_type}")
+                self.output.append(f"       - Wordlist: {self.attack_options.wordlist_location}")
+                self.output.append(f"       - Processes: {self.attack_options.core_count}")
+                
                 pool = QThreadPool.globalInstance()
-                worker = HybridWorker(self.attack_options, self.output)
-                pool.start(worker)
-            if(self.attack_options.attack_type == "Rule-Based"):
-                pool = QThreadPool.globalInstance()
-                worker = RuleBasedWorker(self.attack_options, self.output)
-                pool.start()
-            if(self.attack_options.attack_type == "Rainbow Table"):
-                pool = QThreadPool.globalInstance()
-                worker = RainbowTableWorker(self.attack_options, self.output)
-                pool.start()
-            if(self.attack_options.attack_type == "Markov Chain"):
-                pool = QThreadPool.globalInstance()
-                worker = MarkovWorker(self.attack_options, self.output)
-                pool.start()
+                self.worker = HybridWorker(self.attack_options, self.output, self.stop_flag)
+                pool.start(self.worker)
 
+            if(self.attack_options.attack_type == "Rule-Based"):
+                self.output.append(" Starting Attack ")
+                self.output.append(f"       - Hash: {self.attack_options.hash_value}")
+                self.output.append(f"       - Type: {self.attack_options.hash_type}")
+                self.output.append(f"       - Attack: {self.attack_options.attack_type}")
+                self.output.append(f"       - Ruleset: {self.attack_options.wordlist_location}")
+                self.output.append(f"       - Processes: {self.attack_options.core_count}")
             
+                pool = QThreadPool.globalInstance()
+                self.worker = RuleBasedWorker(self.attack_options, self.output, self.stop_flag)
+                pool.start(self.worker)
+
+            if(self.attack_options.attack_type == "Rainbow Table"):
+                self.output.append(" Starting Attack ")
+                self.output.append(f"       - Hash: {self.attack_options.hash_value}")
+                self.output.append(f"       - Type: {self.attack_options.hash_type}")
+                self.output.append(f"       - Attack: {self.attack_options.attack_type}")
+                self.output.append(f"       - Rainbowtable: {self.attack_options.wordlist_location}")
+                self.output.append(f"       - Processes: {self.attack_options.core_count}")
+
+                pool = QThreadPool.globalInstance()
+                self.worker = RainbowTableWorker(self.attack_options, self.output, self.stop_flag)
+                
+                pool.start(self.worker)
+
+            if(self.attack_options.attack_type == "Markov Chain"):
+                self.output.append(" Starting Attack ")
+                self.output.append(f"       - Hash: {self.attack_options.hash_value}")
+                self.output.append(f"       - Type: {self.attack_options.hash_type}")
+                self.output.append(f"       - Attack: {self.attack_options.attack_type}")
+                self.output.append(f"       - Wordlist: {self.attack_options.wordlist_location}")
+                self.output.append(f"       - Processes: {self.attack_options.core_count}")
+
+                pool = QThreadPool.globalInstance()
+                self.worker = MarkovWorker(self.attack_options, self.output, self.stop_flag )
+                pool.start(self.worker)
+                
+
         else:
             print("Cannot start attack")
 
@@ -1129,7 +1180,9 @@ class Ui_App(object):
     returns: none
     """
     def _pause(self):
-        print("-Pause Attack-")
+        print("- Pause Attack -")
+        self.worker.pause_process()
+        print("- Starting again -")
 
     """
     Name: _resume
@@ -1141,32 +1194,66 @@ class Ui_App(object):
         print("-Resume Attack-")
     
     """
+    Name: _stop
+    Description: Will stop a the current attack
+    Parameters: self
+    returns: none
+    """
+    def _stop(self):
+        print("-Stop Attack-")
+        try:
+            self.worker.stop_process()
+        except AttributeError: 
+            self.output.append(" -= Cannot stop that hasn't started =- ")
+            return
+
+    """
+    Name: recurse_filename
+    Description: Will recursivly change the filename if the same one already exists
+    Parameters: self, num:Integer, password:String
+    returns: none
+    """
+    def _recurse_filename(self, num, location):
+        try:
+            new_filename = f"AppData/attack{num}.txt"
+            self._save_file(location)
+
+        except FileExistsError:
+            self.recurse_filename(num+1, location)
+
+
+    """
     Name: _save_file
     Description: Will create the file and write data to file
     Parameters: self, location: String - file location
     returns: none
     """
     def _save_file(self, location):
-        with open(location, "x") as file:    
-            file.write(f"name={self.temp_name}\n")
-            file.write(f"hash_value={self.attack_options.hash_value}\n")
-            file.write(f"hash_type={self.attack_options.hash_type}\n")
-            file.write(f"attack_type={self.attack_options.attack_type}\n")
-            file.write(f"wordlist_location={self.attack_options.wordlist_location}\n")
-            file.write(f"hash_file_location={self.attack_options.hash_file_location}\n")
-            file.write(f"charsetLower={self.attack_options.charsetLower}\n")
-            file.write(f"charsetUpper={self.attack_options.charsetUpper}\n")
-            file.write(f"charsetNumbers={self.attack_options.charsetNumbers}\n")
-            file.write(f"charsetSymbols={self.attack_options.charsetSymbols}\n")
-            file.write(f"wordlistLbl={self.temp_wordlistlbl}\n")
-            file.write(f"core_count={self.attack_options.core_count}\n")
-            file.write(f"pass_phrase_len={self.attack_options.pass_phrase_len}\n")
-            file.write(f"max_brute_force={self.attack_options.max_brute_force}\n")
-            file.write(f"output=\n{self.temp_output}")
+        num = 1
+        with open(location, "x") as file:
+            try:
+                file.write(f"name={self.temp_name}\n")
+                file.write(f"hash_value={self.attack_options.hash_value}\n")
+                file.write(f"hash_type={self.attack_options.hash_type}\n")
+                file.write(f"attack_type={self.attack_options.attack_type}\n")
+                file.write(f"wordlist_location={self.attack_options.wordlist_location}\n")
+                file.write(f"hash_file_location={self.attack_options.hash_file_location}\n")
+                file.write(f"charsetLower={self.attack_options.charsetLower}\n")
+                file.write(f"charsetUpper={self.attack_options.charsetUpper}\n")
+                file.write(f"charsetNumbers={self.attack_options.charsetNumbers}\n")
+                file.write(f"charsetSymbols={self.attack_options.charsetSymbols}\n")
+                file.write(f"wordlistLbl={self.temp_wordlistlbl}\n")
+                file.write(f"core_count={self.attack_options.core_count}\n")
+                file.write(f"pass_phrase_len={self.attack_options.pass_phrase_len}\n")
+                file.write(f"max_brute_force={self.attack_options.max_brute_force}\n")
+                file.write(f"output=\n{self.temp_output}")
 
-            file.close()
-            self.output.append("-= File Saved Successfully =-")
-
+                self.output.append("-= File Saved Successfully =-")
+            except AttributeError:
+                self.output.append(" -= You cannot save without starting an attack =- ")
+            except FileExistsError:
+                self.recurse_filename(num, location)
+        
     """
     Name: _save
     Description: Will save an attack to a text file
@@ -1175,18 +1262,18 @@ class Ui_App(object):
     """
     def _save(self):
         print("-Save Attack-")
+        try:
+            self.temp_wordlistlbl = self.wordlistFilenameLbl.text()
+            self.temp_output = self.output.toPlainText()
+            self.temp_name = self.attack.objectName()
 
-        self.temp_wordlistlbl = self.wordlistFilenameLbl.text()
-        self.temp_output = self.output.toPlainText()
-        self.temp_name = self.attack.objectName()
+            self.save_location = QFileDialog.getSaveFileName(None,'Save File')
 
-        self.save_location = QFileDialog.getSaveFileName(None,'Save File')
-
-        if(os.path.isfile(f"{self.save_location[0]}.txt")):
-            self._save_file(f"{self.save_location[0]}(1).txt")
-        else:
             self._save_file(f"{self.save_location[0]}.txt")
-    
+        except AttributeError:
+            self.output.append(" -= Cannot save an attack that has not started =- ")
+
+
     """
     Name: _load
     Description: Will load a new attack from a text file
@@ -1246,7 +1333,6 @@ class Ui_App(object):
         self.charsetNumbers.setChecked(self.attack_options.charsetNumbers)
         self.charsetSymbols.setChecked(self.attack_options.charsetSymbols)
         self.cpu_enabled.setChecked(self.attack_options.cpu)
-        self.gpu_enabled.setChecked(self.attack_options.gpu)
 
     """
     Name: _options
@@ -1280,7 +1366,7 @@ class Ui_App(object):
         print("-Create new Attack-")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  
     import sys
     app = QtWidgets.QApplication(sys.argv)
     App = QtWidgets.QMainWindow()
@@ -1288,4 +1374,5 @@ if __name__ == "__main__":
     ui = Ui_App()
     ui.setupUi(App)
     App.show()
+
     app.exec()

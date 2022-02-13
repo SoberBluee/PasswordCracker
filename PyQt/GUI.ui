@@ -164,9 +164,9 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>230</y>
+       <y>270</y>
        <width>101</width>
-       <height>121</height>
+       <height>81</height>
       </rect>
      </property>
      <property name="palette">
@@ -248,22 +248,6 @@
       </property>
       <property name="text">
        <string>CPU</string>
-      </property>
-     </widget>
-     <widget class="QRadioButton" name="gpu_enabled">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>70</y>
-        <width>71</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="toolTip">
-       <string>Use multi-threading on the GPU to crack the password</string>
-      </property>
-      <property name="text">
-       <string>GPU</string>
       </property>
      </widget>
     </widget>
@@ -524,7 +508,7 @@
         <x>10</x>
         <y>120</y>
         <width>351</width>
-        <height>16</height>
+        <height>31</height>
        </rect>
       </property>
       <property name="text">
@@ -612,7 +596,7 @@
         <x>10</x>
         <y>40</y>
         <width>161</width>
-        <height>22</height>
+        <height>31</height>
        </rect>
       </property>
       <property name="toolTip">
@@ -623,9 +607,9 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>70</y>
+        <y>100</y>
         <width>161</width>
-        <height>31</height>
+        <height>41</height>
        </rect>
       </property>
       <property name="toolTip">
@@ -716,7 +700,7 @@
         <x>10</x>
         <y>40</y>
         <width>161</width>
-        <height>22</height>
+        <height>31</height>
        </rect>
       </property>
       <property name="toolTip">
@@ -727,9 +711,9 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>70</y>
+        <y>100</y>
         <width>161</width>
-        <height>31</height>
+        <height>41</height>
        </rect>
       </property>
       <property name="toolTip">
@@ -748,22 +732,6 @@
        <width>861</width>
        <height>321</height>
       </rect>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="optionBtn">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>520</y>
-       <width>101</width>
-       <height>31</height>
-      </rect>
-     </property>
-     <property name="toolTip">
-      <string>Application options.</string>
-     </property>
-     <property name="text">
-      <string>Options</string>
      </property>
     </widget>
     <widget class="QPushButton" name="passwordFileBtn">
@@ -786,7 +754,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>400</y>
+       <y>440</y>
        <width>101</width>
        <height>31</height>
       </rect>
@@ -802,7 +770,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>440</y>
+       <y>480</y>
        <width>101</width>
        <height>31</height>
       </rect>
@@ -818,13 +786,29 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>480</y>
+       <y>520</y>
        <width>101</width>
        <height>31</height>
       </rect>
      </property>
      <property name="text">
       <string>Save</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="stopBtn">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>400</y>
+       <width>101</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="toolTip">
+      <string>Start attack.</string>
+     </property>
+     <property name="text">
+      <string>Stop</string>
      </property>
     </widget>
    </widget>

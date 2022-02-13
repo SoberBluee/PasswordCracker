@@ -1,7 +1,7 @@
 import time
 import hashlib
 
-class RainbowtableAttack():
+class RainbowtableAttackAlgorithm():
     def __init__(self, attack_options, data, found):
         pass
     def get_hashing_algorithm(self):

@@ -3,8 +3,7 @@ import multiprocessing as mp
 import hashlib
 import time
 
-class BruteForce():
-    
+class BruteForceAttackAlgorithm():
     """
     Name: __init__
     Description: Initializes multi-processing data 
@@ -78,7 +77,7 @@ class BruteForce():
         num = 1
         try:
             with open("AppData/result.txt", "x") as result:
-                result.write(f"{password}")
+                result.write(f"{password}\n")
                 result.write(f"{self.time:.4f}")
                 result.close()
         except FileExistsError:
@@ -94,9 +93,7 @@ class BruteForce():
         guess = ""
         #If the length is 0 then we have built the full password for that length
         if(len == 0):
-
-            hash = password.rstrip()
-            hash = hash.encode('UTF-8')
+            hash = password.encode('UTF-8')
             #hashs the generated password with the given hashing algorithm
             hash_algorithm = self.get_hashing_algorithm()
             hash_algorithm.update(hash)
@@ -105,9 +102,12 @@ class BruteForce():
             #Compare passwords to check if it has cracked
             if(hash == self.hash_to_crack):
                 print(f"Found Password: {password}")
+                
+                #stops and prints timer
                 self.end = time.time()
                 self.time = self.end - self.start
                 print('{:.4f} seconds'.format(self.time))
+
                 self.save_output(password)
                 self.found.set()
  
@@ -132,18 +132,17 @@ class BruteForce():
     def brute_force(self):
         #Define starting length
         length = 1
-        hash_to_crack = self.attack_options.hash_value.lower()
+       
         self.start = time.time()
         if(self.attack_options.max_brute_force == 0):
             while(True):
-                print(f"Length: {length}")
-                self.crack(length, "", hash_to_crack)
+                self.crack(length, "")
                 length+=1
         else:
             while(length != self.attack_options.max_brute_force):
-                print(f"Length: {length}")
-                self.crack(length, "", hash_to_crack)
+                self.crack(length, "")
                 length+=1
+                
     """
     Name: main
     Description: Main function to start brute force attack

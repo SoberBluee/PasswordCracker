@@ -1,7 +1,7 @@
 import time
 import hashlib
 
-class HybridAttack():
+class HybridAttackAlgorithm():
     def __init__(self, attack_options, data, rules,found):
         self.attack_options = attack_options
         self.data = data
@@ -49,7 +49,7 @@ class HybridAttack():
                 result.write(f"{self.time:.4f}")
                 result.close()
         except FileExistsError:
-            self.recurse_filename(num+1, password)
+            self.recurse_filename(num+1, password) 
         
     """
     Name: saveOutput
@@ -76,7 +76,6 @@ class HybridAttack():
     returns: word: String
     """
     def apply_rules(self, rule, start_begining):  
-    
         for idx, word in enumerate(self.data):
             word = self.clean_word(word)
             
@@ -84,6 +83,7 @@ class HybridAttack():
                 temp_word = rule + word
             else:
                 temp_word = word + rule
+
             print(temp_word)
             temp_word = temp_word.rstrip()
             hash = temp_word.encode('UTF-8')
@@ -109,7 +109,6 @@ class HybridAttack():
     """
     def hybrid_attack(self):
         self.start = time.time()
-
         for rule in self.rules:
             rule=rule.rstrip()
             self.apply_rules(rule, False)

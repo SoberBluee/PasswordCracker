@@ -1,7 +1,7 @@
 import time
 import hashlib
 
-class DicionaryAttack():
+class DicionaryAttackAlgorithm():
     """
     Name: __init__
     Description: Initializes multi-processing data  
@@ -9,10 +9,13 @@ class DicionaryAttack():
     returns: none
     """
     def __init__(self, attack_options, data, found):
-        self.hash_to_crack = self.attack_options.hash_value.lower()
+        #process parameters
         self.attack_options = attack_options
         self.data= data
         self.found = found
+
+        #more variable definitions
+        self.hash_to_crack = self.attack_options.hash_value.lower()
         self.passwords_tried = 0
         self.password = ""
         self.time = 0.0
@@ -55,7 +58,7 @@ class DicionaryAttack():
         num = 1
         try:
             with open("AppData/result.txt", "x") as result:
-                result.write(f"{password}")
+                result.write(f"{password}\n")
                 result.write(f"{self.time:.4f}")
                 result.close()
         except FileExistsError:
@@ -80,7 +83,6 @@ class DicionaryAttack():
             hash = hash_algorithm.hexdigest()
             passwd = str(passwd, 'UTF-8')
             
-            # print(f"{hash}:{self.hash_to_crack}")
             if(hash == self.hash_to_crack):
                 #return data back to main window to be outputted to output box
                 print(f"found password: {passwd}")
