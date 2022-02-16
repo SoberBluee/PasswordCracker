@@ -7,7 +7,7 @@ class BruteForceAttackAlgorithm():
     """
     Name: __init__
     Description: Initializes multi-processing data 
-    Parameters: self, AttackOptions: Object
+    Parameters: self, AttackOptions: Object, starting_point: string, charset: String, found:Event()
     returns: none
     """
     def __init__(self, AttackOptions, starting_point, charset, found):

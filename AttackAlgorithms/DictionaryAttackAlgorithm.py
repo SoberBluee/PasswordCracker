@@ -63,7 +63,7 @@ class DicionaryAttackAlgorithm():
                 result.close()
         except FileExistsError:
             self.recurse_filename(num, passwd)
-            
+        
 
     """
     Name: dictionary_attack

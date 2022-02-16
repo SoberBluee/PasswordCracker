@@ -2,16 +2,25 @@ import time
 import hashlib
 
 class HybridAttackAlgorithm():
+    """
+    Name: __init__
+    Description: Initializes multi-processing data 
+    Parameters: self, AttackOptions: Object, data: List, rules: List, found: Event()
+    returns: none
+    """
     def __init__(self, attack_options, data, rules,found):
+        #Parameter data
         self.attack_options = attack_options
         self.data = data
         self.rules = rules
         self.found = found
 
+        #attack data
         self.charset = '1234567890!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ '
         self.charset_len = len(self.charset)
         self.hash_to_crack = self.attack_options.hash_value.lower()
-        
+
+        #other data
         self.passwords_tried = 0
         self.password = ""
         self.time = 0.0
@@ -76,7 +85,7 @@ class HybridAttackAlgorithm():
     returns: word: String
     """
     def apply_rules(self, rule, start_begining):  
-        for idx, word in enumerate(self.data):
+        for word in self.data:
             word = self.clean_word(word)
             
             if(start_begining):
@@ -114,12 +123,12 @@ class HybridAttackAlgorithm():
             self.apply_rules(rule, False)
             self.apply_rules(rule, True)
 
-
-        #look through rockyou file
-        #clean text for numbers and symobls 
-        #apply brute force to the word
-        #continue if not found
-
+    """
+    Name: main  
+    Description: starts a hybird attack
+    Parameters: self, word: String (word to be processed)
+    returns: word: String
+    """
     def main(self):
         print(" - Starting hybrid attack - ")
         self.hybrid_attack()
