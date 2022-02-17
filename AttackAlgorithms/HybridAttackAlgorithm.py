@@ -23,7 +23,6 @@ class HybridAttackAlgorithm():
         #other data
         self.passwords_tried = 0
         self.password = ""
-        self.time = 0.0
 
     """
     Name: get_hashing_algorithm

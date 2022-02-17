@@ -11,9 +11,7 @@ import time
 import os
 import multiprocessing
 from multiprocessing import Process, Event
-import logging
 import random
-import unittest
 import psutil
 
 #PyQt6 imports
@@ -31,21 +29,15 @@ from AttackAlgorithms.RulebasedAttackAlgorithm import RulebasedAttackAlgorithm
 from AttackAlgorithms.RainbowtableAttackAlgorithm import RainbowtableAttackAlgorithm
 from AttackAlgorithms.MarkovAttackAlgorithm import MarkovAttackAlgorithm
 
-Log_Format = " %(name)s -=- %(levelname)s %(asctime)s - %(message)s - %(process)s"
-
-logging.basicConfig(filename="log/guiDesign.log", filemode="w", format=Log_Format)
-logger = logging.getLogger()
-
-
 """
 Class Name: BruteForceWorker
-Description: Will start brute force attack using core_count to multi-process
-Parameters: QRunnable: Start create a thread class
+Description: Will start brute force attack using core_count to start multi-process
+Parameters: QRunnable: Implements a runnable interface
 """
 class BruteForceWorker(QRunnable):
     """"
     Name: __init__
-    Description: Constructor function BruteForceWorker. 
+    Description: Constructor function for BruteForceWorker. 
     Parameters: self, attack_options: AttackOptions
     returns: none
     """
@@ -54,14 +46,20 @@ class BruteForceWorker(QRunnable):
         self.attack_options = attack_options
         self.charset = charset
         self.output = output
+        
         self.process_list = list()
         self.core_count = self.attack_options.core_count
 
-        
+    """"
+    Name: split_data
+    Description: Splits a chracter set into equal chunck  
+    Parameters: self 
+    returns: none
+    """
     def split_data(self):
+        #define data
         split_data = list()
         self.charset = list(self.charset)
-
         charset_len = len(self.charset)
         gap = int(charset_len / self.attack_options.core_count)
 
@@ -69,8 +67,8 @@ class BruteForceWorker(QRunnable):
         data = [self.charset[i:i+gap] for i in range(0, charset_len, gap)]
         #if the split data size does not match the core_count then it will randomly allocate a character to another array
         if(len(data) != self.core_count):
-            odd = data[-1]
-            for idx, x in enumerate(odd):
+            reallocate_array = data[-1]
+            for idx, x in enumerate(reallocate_array):
                 random_int = random.randint(0,self.core_count)
                 data[random_int] += x
             data.pop(-1)
@@ -115,23 +113,22 @@ class BruteForceWorker(QRunnable):
     returns: none
     """
     def brute_force_cpu(self):
+        #data with starting points
         data = self.split_data()
-
         #found event triggered when password found
         self.found = Event()
-    
+        #creates processes passing in needed data
         for idx ,i in enumerate(range(self.core_count)):
             starting_point = data[i][0]
-            
             dictionary = BruteForceAttackAlgorithm(self.attack_options, starting_point, self.charset ,self.found)
 
             #Creating process using the dictionary main function
             p = multiprocessing.Process(target=dictionary.main)
+            self.output.append(f" -= Starting process {i} =-")
             self.process_list.append(p)
 
         #Starts processes
         for process in self.process_list:
-            logger.info(f"Starting process{process.name}")
             process.start()
 
         #Wait's until password is found
@@ -142,21 +139,26 @@ class BruteForceWorker(QRunnable):
             print("Terminating")
             process.terminate()
 
+        #Waits for processes to finish terminating
         for process in self.process_list:
             process.join()
             
+        #Finishing up
         self.process_result()
-        
         self.output.append(" Attack Finished ")
-
-        # Test_GUI.split_data_test(self,self.attack_options.core_count)
-
         print("Done")
     
+    """
+    Name: stop_process
+    Description: Will terminate processes when button is pressed
+    Parameters: self 
+    returns: none
+    """
     def stop_process(self):
         #Terminates processes
         for process in self.process_list:
             print("Terminating")
+            self.output(f"-= Terminating {process} =-")
             process.terminate()
     
     """
@@ -166,15 +168,15 @@ class BruteForceWorker(QRunnable):
     returns: none
     """
     def run(self):
+        self.output.append("-= Starting Brute Force Attack =-")
         if(self.attack_options.cpu):
-            logging.info("CPU SELECTED")
             self.output.append(" Using CPU")
             self.brute_force_cpu()
 
 """
 Class Name: DictionaryWorker
-Description: Will start dictionary attack using core_count to multi-process
-Parameters: QRunnable: Start create a thread class
+Description: Will start dictionary attack using core_count to start multi-process
+Parameters: QRunnable: Implements a runnable interface
 """
 class DictionaryWorker(QRunnable):
     
@@ -186,12 +188,10 @@ class DictionaryWorker(QRunnable):
     """
     def __init__(self, attack_options, output):
         super().__init__()
-        #Parameter
         self.attack_options = attack_options
         self.output = output
-    
+
         self.process_list = list()
-        self.data = None
         self.core_count = self.attack_options.core_count
 
     """"
@@ -204,14 +204,12 @@ class DictionaryWorker(QRunnable):
         data_to_split = list()
         tic = time.time()
         with open(self.attack_options.wordlist_location, encoding="latin-1") as file:
-            #append data using set comprehensions
             data_to_split = [line for line in file]
 
         data = [data_to_split[i::self.core_count] for i in range(self.core_count)] #split up data into chuncks for each process
         toc = time.time()
         
         print('Split Data: {:.4f} seconds'.format(toc-tic))
-        logging.info('Split Data: {:.4f} seconds'.format(toc-tic))
         self.output.append(' Split Data: {:.4f} seconds'.format(toc-tic))
         
         return data
@@ -258,11 +256,13 @@ class DictionaryWorker(QRunnable):
         data = self.split_data()
         #found event triggered when password found
         self.found = Event()
-       
-        for idx,t in enumerate(range(self.core_count)):
+
+        #creates processes passing in needed data
+        for idx, i in enumerate(range(self.core_count)):
             dictionary = DicionaryAttackAlgorithm(self.attack_options, data[idx], self.found)
             #Creating process using the dictionary main function
             p = multiprocessing.Process(target=dictionary.main)
+            self.output.append(f"-= Starting process {i} =-")
             self.process_list.append(p)
 
         #get pids of process
@@ -277,7 +277,7 @@ class DictionaryWorker(QRunnable):
     
         #When event is triggered, terminate all processes
         for process in self.process_list:
-            print("Terminating")
+            print("-= Terminating =-")
             process.terminate()
 
         #Waits until all processes are finished terminating
@@ -290,14 +290,15 @@ class DictionaryWorker(QRunnable):
 
     """
     Name: stop_process
-    Description: Will terminate all processes when stop button is pressesd
+    Description: Will terminate processes when button is pressed
     Parameters: self 
     returns: none
     """
     def stop_process(self):
-        #When event is triggered, terminate all processes
+        #Terminates processes
         for process in self.process_list:
             print("Terminating")
+            self.output(f"-= Terminating {process} =-")
             process.terminate()
 
     """
@@ -308,7 +309,6 @@ class DictionaryWorker(QRunnable):
     """
     def pause_process(self):
         print("Pauseing Application")
-
         for id in self.pid:
             p = psutil.Process(id)
             p.suspend()
@@ -321,7 +321,6 @@ class DictionaryWorker(QRunnable):
     """
     def resume_process(self):
         print("Resuming Application")
-        
         for id in self.pid:
             p = psutil.Process(id)
             p.resume()
@@ -333,8 +332,8 @@ class DictionaryWorker(QRunnable):
     returns: none
     """
     def run(self):
+        self.output.append("-= Starting Dictionary Attack =-")
         if(self.attack_options.cpu):
-            logging.info("CPU SELECTED")
             self.output.append(" Using CPU")
             self.dictionary_cpu()
 
@@ -352,11 +351,13 @@ class HybridWorker(QRunnable):
     """
     def __init__(self, attack_options, output):
         super().__init__()
-        self.HYBRID_RULE_DIR = "Rulesets/hybrid_rule/"
         self.attack_options = attack_options
         self.output = output
+
         self.process_list = list()
         self.core_count = self.attack_options.core_count
+        self.HYBRID_RULE_DIR = "Rulesets/hybrid_rule/"
+
         
     """"
     Name: split_data
@@ -375,7 +376,6 @@ class HybridWorker(QRunnable):
         end = time.time()
 
         print('Split Data: {:.4f} seconds'.format(end-start))
-        logging.info('Split Data: {:.4f} seconds'.format(end-start))
         self.output.append(' Split Data: {:.4f} seconds'.format(end-start))
         
         return data
@@ -447,8 +447,6 @@ class HybridWorker(QRunnable):
         #found event triggered when password found
         self.found = Event()
 
-        start = time.time()
-
         for idx, t in enumerate(range(self.core_count)):
             dictionary = HybridAttackAlgorithm(self.attack_options, data[idx], rules[idx], self.found)
             #Creating process using the dictionary main function
@@ -476,7 +474,7 @@ class HybridWorker(QRunnable):
 
     """
     Name: stop_process
-    Description: Will terminate all processes when button is pressed
+    Description: Will terminate processes when button is pressed
     Parameters: self 
     returns: none
     """
@@ -484,6 +482,7 @@ class HybridWorker(QRunnable):
         #Terminates processes
         for process in self.process_list:
             print("Terminating")
+            self.output(f"-= Terminating {process} =-")
             process.terminate()
 
     """
@@ -493,8 +492,8 @@ class HybridWorker(QRunnable):
     returns: none
     """
     def run(self):
+        self.output.append("-= Starting Hybrid Attack =-")
         if(self.attack_options.cpu):
-            logging.info("CPU SELECTED")
             self.output.append(" Using CPU")
             self.hybrid_cpu()
 
@@ -519,7 +518,6 @@ class RuleBasedWorker(QRunnable):
         self.core_count = self.attack_options.core_count
 
         self.RULE_PATH = 'Rulesets\\rule_based_rules'
-        self.rules = list()
         
     """"
     Name: split_data
@@ -539,7 +537,6 @@ class RuleBasedWorker(QRunnable):
 
         #Print timing for split data
         print('Split Data: {:.4f} seconds'.format(end-start))
-        logging.info('Split Data: {:.4f} seconds'.format(end-start))
         self.output.append(' Split Data: {:.4f} seconds'.format(end-start))
         
         return data
@@ -551,7 +548,7 @@ class RuleBasedWorker(QRunnable):
     returns: none
     """
     def get_rules(self):
-        rules_to_split = list()
+        rules = list()
         start = time.time()
         #opens rule files
         for filename in os.listdir(self.RULE_PATH):
@@ -559,7 +556,6 @@ class RuleBasedWorker(QRunnable):
                 with open(os.path.join(self.RULE_PATH, filename)) as file:
                     rules += [data.rstrip() for data in file]
 
-        rules = [rules_to_split[i::self.core_count] for i in range(self.core_count)]
         end = time.time()
 
         #print timing data
@@ -567,6 +563,38 @@ class RuleBasedWorker(QRunnable):
         self.output.append(' Split rules: {:.4f} seconds'.format(end-start))
 
         return rules
+
+    """
+    Name: process_result
+    Description: Will get the correct result file and output result to output box
+    Parameters: self 
+    returns: none
+    """
+    def process_result(self):
+        result_counter = 0 
+        #Will cound number of results file in case there are more than one result file
+        for filename in os.listdir("AppData/"):
+            if filename.startswith("result"):
+                result_counter += 1
+
+        #Will get the latest version of the results from AppData folder
+        if(result_counter == 0):
+            filename = f"AppData/result.txt"
+        else:
+            result_counter -= 1 
+            if(result_counter == 0):
+                filename = f"AppData/result.txt"
+            else:
+                filename = f"AppData/result{result_counter}.txt"
+
+        #Will open the results file and output results in the correct order
+        with open(filename, "r") as result:
+            for idx, data in enumerate(result):
+                data = data.rstrip("\n")
+                if(idx == 1):
+                    self.output.append(f" {data} sec")
+                else:
+                    self.output.append(f" Password: {data}")
 
     """
     Name: rulebase_cpu
@@ -579,17 +607,14 @@ class RuleBasedWorker(QRunnable):
         data = self.split_data()
         #process rule file
         rules = self.get_rules()
-
         #found event triggered when password found
         self.found = Event()
 
-        rules_to_split = list()
-        start = time.time()
-
-        for idx, t in enumerate(range(self.core_count)):
-            dictionary = RulebasedAttackAlgorithm(self.attack_options, data[idx], rules[idx], self.found)
+        for idx, i in enumerate(range(self.core_count)):
+            dictionary = RulebasedAttackAlgorithm(self.attack_options, data[idx], rules, self.found)
             #Creating process using the dictionary main function
             p = multiprocessing.Process(target=dictionary.main)
+            self.output(f"-= Terminating {i} =-")
             self.process_list.append(p)
 
         #Starts processes
@@ -612,6 +637,19 @@ class RuleBasedWorker(QRunnable):
         print("Done")
 
     """
+    Name: stop_process
+    Description: Will terminate processes when button is pressed
+    Parameters: self 
+    returns: none
+    """
+    def stop_process(self):
+        #Terminates processes
+        for process in self.process_list:
+            print("Terminating")
+            self.output(f"-= Terminating {process} =-")
+            process.terminate()
+
+    """
     Name: run
     Description: Starts rule based attack selecting the CPU
     Parameters: self 
@@ -619,7 +657,6 @@ class RuleBasedWorker(QRunnable):
     """
     def run(self):
         if(self.attack_options.cpu):
-            logging.info("CPU SELECTED")
             self.output.append(" Using CPU")
             self.rulebase_cpu()
 

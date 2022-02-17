@@ -101,12 +101,8 @@ class DicionaryAttackAlgorithm():
     #returns: output: String
     """
     def main(self):
-        print("- Start Dictionary -")
-        
+        print("-= Start Dictionary =-")
         self.dictionary_attack()
-        print(str(self.password) + ":" + str(self.passwords_tried) + str(self.time))
-
-        exit(str(self.password) + ":" + str(self.passwords_tried) + str(self.time))
 
 
     

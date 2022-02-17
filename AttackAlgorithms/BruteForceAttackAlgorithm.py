@@ -17,11 +17,9 @@ class BruteForceAttackAlgorithm():
         self.charset = charset
         self.found = found
 
-        #define more variables
         self.charset_len = len(charset)
-        self.hash_to_crack = self.attack_options.hash_value.lower() #################could break
+        self.hash_to_crack = self.attack_options.hash_value.lower() 
         self.starting_point = self.get_charset_starting_point()
-        self.password_set = False
 
         #Timing variables
         self.start = 0.0
@@ -30,7 +28,7 @@ class BruteForceAttackAlgorithm():
 
     """
     Name: get_hashing_algorithm
-    Description: Get the hashing algorithm using a string
+    Description: Get the hashing algorithm using a string from attack options
     Parameters: self
     returns: hashing algorithm
     """
@@ -41,10 +39,9 @@ class BruteForceAttackAlgorithm():
     Name: get_charset_starting_point
     Description: Gets the posistion of the starting point using the charset array
     Parameters: self
-    returns: idx:Ineter (posistion in the charset)
+    returns: idx: Integer (posistion in the charset)
     """
     def get_charset_starting_point(self):
-        # return [idx for idx,x in enumerate(self.charset) if str(x) == self.starting_point]
         for idx, x in enumerate(self.charset):
             if(str(x) == self.starting_point):
                 return idx
@@ -66,9 +63,9 @@ class BruteForceAttackAlgorithm():
             self.recurse_filename(num+1, password)
         
     """
-    Name: saveOutput
-    Description:Will save the output to a file and will change filename if already exists
-    Parameters: self
+    Name: save_output
+    Description: Will save the output to a file and will change filename if already exists
+    Parameters: self, passwd: String (password to be saves)
     returns: hashing algorithm
     """
     def save_output(self, passwd):
@@ -90,7 +87,6 @@ class BruteForceAttackAlgorithm():
     returns: idx:Ineter (posistion in the charset)
     """
     def crack(self, len, password):
-        guess = ""
         #If the length is 0 then we have built the full password for that length
         if(len == 0):
             hash = password.encode('UTF-8')
@@ -132,8 +128,9 @@ class BruteForceAttackAlgorithm():
     def brute_force(self):
         #Define starting length
         length = 1
-       
+    
         self.start = time.time()
+        #if setting is unchanged then attempty to crack infinatly
         if(self.attack_options.max_brute_force == 0):
             while(True):
                 self.crack(length, "")

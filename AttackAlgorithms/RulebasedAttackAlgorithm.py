@@ -10,7 +10,7 @@ class RulebasedAttackAlgorithm():
         self.found = found
 
         self.charset = '1234567890!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ '
-
+        self.hash_to_crack = self.attack_options.hash_value.lower() 
     
     """
     Name: get_hashing_algorithm
@@ -65,7 +65,6 @@ class RulebasedAttackAlgorithm():
         except FileExistsError:
             self.recurse_filename(num, passwd)
 
-        
 
     """
     Name: apply_rules
@@ -75,24 +74,54 @@ class RulebasedAttackAlgorithm():
     """
     def apply_rules(self, word):
         for rule in self.rules:
-            rule = list(rule)
+            temp_word = word
+            # rule = list(rule)
             first_char = rule[0]
             #check if first character is a rule
             if(first_char not in self.charset):
                 if(first_char == 'l'):
-                    word = word.lower()
+                    temp_word = temp_word.lower()
                 if(first_char == 'u'):
-                    word = word.upper()
+                    temp_word = temp_word.upper()
                 if(first_char == 'd'):
-                    word = word + word
+                    temp_word = temp_word + temp_word
                 if(first_char == 'c'):
-                    pass
-            
-            if("$" in rule):
-                pass
-            if("^" in rule):
-                pass
+                    temp_word = temp_word[0].upper()
 
+            #suffix
+            if("$" in rule):
+                rule = rule.split("$")
+                rule.pop(0)
+                rule = ''.join(rule)
+                temp_word = rule + temp_word
+
+            #prefix
+            if("^" in rule):
+                rule = rule.split("^")
+                rule.pop(0)
+                rule = ''.join(rule)
+                temp_word = temp_word + rule
+
+            print(temp_word + "\n")
+
+            if(temp_word == '7560abcabcdanieldaniel3085'):
+                print("something")
+
+            hash = temp_word.encode('UTF-8')
+            #hashs the generated password with the given hashing algorithm
+            hash_algorithm = self.get_hashing_algorithm()
+            hash_algorithm.update(hash)
+            hash = hash_algorithm.hexdigest()
+        
+            #Compare passwords to check if it has cracked
+            if(hash == self.hash_to_crack):
+                print(f"Found Password: {temp_word}")
+                self.end = time.time()
+                self.time = self.end - self.start
+
+                print('{:.4f} seconds'.format(self.time))
+                self.save_output(temp_word)
+                self.found.set()
 
     """
     Name: rulebased_attack
@@ -101,19 +130,14 @@ class RulebasedAttackAlgorithm():
     returns: hashing algorithm
     """
     def rulebased_attack(self):
-        self.start = time()
+        self.start = time.time()
         
         for word in self.data:
             word = self.clean_word(word)
-            self.apply_rules(word)
-
-        # loop over dictionary
-        # clean word
-        # call apply rule
-        # loop through rules in list
-        # check what type of rule it is (prefix & suffix)
-        # check for rule to apply to word
-        # apply rule to word then add the rest
+            if(word == ''):
+                continue
+            else:
+                self.apply_rules(word)
 
     def main(self):
         print(" - Starting Rule based attack - ")
