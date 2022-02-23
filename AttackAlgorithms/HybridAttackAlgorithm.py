@@ -8,7 +8,7 @@ class HybridAttackAlgorithm():
     Parameters: self, AttackOptions: Object, data: List, rules: List, found: Event()
     returns: none
     """
-    def __init__(self, attack_options, data, rules,found):
+    def __init__(self, attack_options, data, rules, found):
         #Parameter data
         self.attack_options = attack_options
         self.data = data
@@ -62,7 +62,7 @@ class HybridAttackAlgorithm():
     """
     Name: saveOutput
     Description:Will save the output to a file and will change filename if already exists
-    Parameters: self
+    Parameters: self, passwd: String
     returns: hashing algorithm
     """
     def save_output(self, passwd):
@@ -80,19 +80,19 @@ class HybridAttackAlgorithm():
     """
     Name: apply_rules
     Description: Will apply a rule set to a word from a generated file
-    Parameters: self, word: String (word to be processed), start_begining:Boolean 
-    returns: word: String
+    Parameters: self, rule: String (word to be processed), start_begining: Boolean 
+    returns: none
     """
     def apply_rules(self, rule, start_begining):  
         for word in self.data:
+            #Cleans a word of an integers and symbols
             word = self.clean_word(word)
-            
+            #Will check if appending to start or end of string
             if(start_begining):
                 temp_word = rule + word
             else:
                 temp_word = word + rule
 
-            print(temp_word)
             temp_word = temp_word.rstrip()
             hash = temp_word.encode('UTF-8')
             #hashs the generated password with the given hashing algorithm
@@ -119,6 +119,7 @@ class HybridAttackAlgorithm():
         self.start = time.time()
         for rule in self.rules:
             rule=rule.rstrip()
+            #2 calles to apply rules as a prefix and suffix
             self.apply_rules(rule, False)
             self.apply_rules(rule, True)
 

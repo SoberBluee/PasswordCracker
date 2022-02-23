@@ -13,6 +13,7 @@ import multiprocessing
 from multiprocessing import Process, Event
 import random
 import psutil
+import subprocess
 
 #PyQt6 imports
 from PyQt6 import QtCore, QtGui, QtWidgets
@@ -26,7 +27,6 @@ from AttackAlgorithms.BruteForceAttackAlgorithm import BruteForceAttackAlgorithm
 from AttackAlgorithms.DictionaryAttackAlgorithm import DicionaryAttackAlgorithm
 from AttackAlgorithms.HybridAttackAlgorithm import HybridAttackAlgorithm
 from AttackAlgorithms.RulebasedAttackAlgorithm import RulebasedAttackAlgorithm
-from AttackAlgorithms.RainbowtableAttackAlgorithm import RainbowtableAttackAlgorithm
 from AttackAlgorithms.MarkovAttackAlgorithm import MarkovAttackAlgorithm
 
 """
@@ -38,7 +38,7 @@ class BruteForceWorker(QRunnable):
     """"
     Name: __init__
     Description: Constructor function for BruteForceWorker. 
-    Parameters: self, attack_options: AttackOptions
+    Parameters: self, attack_options: AttackOptions, charset:String, output:QTextBrowser
     returns: none
     """
     def __init__(self, attack_options, charset, output):
@@ -183,7 +183,7 @@ class DictionaryWorker(QRunnable):
     """"
     Name: __init__
     Description: Constructor function Dictionary Worker. 
-    Parameters: self 
+    Parameters: self, attack_options: AttackOptions, output:QTextBrowser
     returns: none
     """
     def __init__(self, attack_options, output):
@@ -196,7 +196,7 @@ class DictionaryWorker(QRunnable):
 
     """"
     Name: split_data
-    Description: Splits rockyou.txt into equal sections for processing  
+    Description: Splits a wordlist into equal sections for processing  
     Parameters: self 
     returns: none
     """
@@ -665,15 +665,22 @@ Class Name: RainbowTableWorker
 Description: Will start rainbow table attack using core_count to multi-process
 Parameters: QRunnable: Start create a thread class
 """
-class RainbowTableWorker(QRunnable):
+class RainbowTableAttack(QRunnable):
     def __init__(self, attack_options, output):
-        pass
-    def split_data(self):
-        pass
+        self.attack_options = attack_options
+        self.output = output;
+    
     def rainbowtable_cpu(self):
-        pass
+        command = f"Rainbowcrack/rtgen -h {self.attack_options.hash}"
+        attack = subprocess.Popen()
+    
     def run(self):
-        pass
+        #
+        if(self.attack_options.cpu):
+            self.output.append(" Using CPU")
+            self.rainbowtable_cpu()
+
+        
 
 """
 Class Name: MarkovWorker
@@ -1330,7 +1337,7 @@ class Ui_App(object):
                 self.output.append(f"       - Processes: {self.attack_options.core_count}")
 
                 pool = QThreadPool.globalInstance()
-                self.worker = RainbowTableWorker(self.attack_options, self.output)
+                self.worker = RainbowTableAttack(self.attack_options, self.output)
                 
                 pool.start(self.worker)
 

@@ -147,7 +147,7 @@ class BruteForceAttackAlgorithm():
     returns: none
     """
     def main(self):
-        print(" - Starting brute force - ")
+        print(" -= Starting brute force =- ")
         self.brute_force()
         
             

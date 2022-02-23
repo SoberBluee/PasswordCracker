@@ -5,7 +5,7 @@ class DicionaryAttackAlgorithm():
     """
     Name: __init__
     Description: Initializes multi-processing data  
-    Parameters: self, AttackOptions: Object, data: List, found: Event
+    Parameters: self, AttackOptions: Object, data: List, found: Event()
     returns: none
     """
     def __init__(self, attack_options, data, found):
@@ -49,7 +49,7 @@ class DicionaryAttackAlgorithm():
     """
     Name: saveOutput
     Description: Get the hashing algorithm using a string
-    Parameters: self
+    Parameters: self, passwd: String
     returns: hashing algorithm
     """
     def save_output(self, passwd):
@@ -73,11 +73,11 @@ class DicionaryAttackAlgorithm():
     """
     def dictionary_attack(self):
         start = time.time()
-        
+        #Loop over data from wordlist
         for passwd in self.data:
             passwd = passwd.rstrip()
             passwd = passwd.encode('UTF-8')
-            
+            #Hashes the password with the correct hashing algorithm
             hash_algorithm = self.get_hashing_algorithm()
             hash_algorithm.update(passwd)
             hash = hash_algorithm.hexdigest()
@@ -89,6 +89,7 @@ class DicionaryAttackAlgorithm():
                 end = time.time()
                 self.time = end-start
                 print(f'{self.time:.4f} seconds')
+                
                 #output result to file and terminate cpus
                 self.save_output(passwd)
                 self.found.set()

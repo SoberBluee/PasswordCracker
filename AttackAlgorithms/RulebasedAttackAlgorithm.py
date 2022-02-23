@@ -102,11 +102,6 @@ class RulebasedAttackAlgorithm():
                 rule = ''.join(rule)
                 temp_word = temp_word + rule
 
-            print(temp_word + "\n")
-
-            if(temp_word == '7560abcabcdanieldaniel3085'):
-                print("something")
-
             hash = temp_word.encode('UTF-8')
             #hashs the generated password with the given hashing algorithm
             hash_algorithm = self.get_hashing_algorithm()
@@ -131,7 +126,6 @@ class RulebasedAttackAlgorithm():
     """
     def rulebased_attack(self):
         self.start = time.time()
-        
         for word in self.data:
             word = self.clean_word(word)
             if(word == ''):
