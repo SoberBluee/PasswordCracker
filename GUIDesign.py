@@ -12,7 +12,6 @@ import os
 import multiprocessing
 from multiprocessing import Process, Event
 import random
-import psutil
 import subprocess
 
 #PyQt6 imports
@@ -102,9 +101,9 @@ class BruteForceWorker(QRunnable):
         with open(filename, "r") as result:
             for idx, data in enumerate(result): 
                 if(idx == 1):
-                    self.output.append(f" {data} sec")
+                    self.output.append(f"\t -= {data} sec =-")
                 else:
-                    self.output.append(f" Password: {data}")
+                    self.output.append(f"\t -= Password found: {data} =-")
     
     """
     Name: brute_force_cpu
@@ -115,6 +114,7 @@ class BruteForceWorker(QRunnable):
     def brute_force_cpu(self):
         #data with starting points
         data = self.split_data()
+        
         #found event triggered when password found
         self.found = Event()
         #creates processes passing in needed data
@@ -124,7 +124,7 @@ class BruteForceWorker(QRunnable):
 
             #Creating process using the dictionary main function
             p = multiprocessing.Process(target=dictionary.main)
-            self.output.append(f" -= Starting process {i} =-")
+            self.output.append(f"\t-= Starting process {i} =-")
             self.process_list.append(p)
 
         #Starts processes
@@ -136,7 +136,7 @@ class BruteForceWorker(QRunnable):
 
         #Terminates processes
         for process in self.process_list:
-            print("Terminating")
+            print("\t-= Terminating =-")
             process.terminate()
 
         #Waits for processes to finish terminating
@@ -145,7 +145,8 @@ class BruteForceWorker(QRunnable):
             
         #Finishing up
         self.process_result()
-        self.output.append(" Attack Finished ")
+        self.output.append("\t-= Attack Finished =- ")
+        self.process_list.clear()
         print("Done")
     
     """
@@ -163,15 +164,30 @@ class BruteForceWorker(QRunnable):
     
     """
     Name: run
-    Description: Starts brute force attack using process amount with process terminatation(syncronisation)
+    Description: Starts brute force attack selecting the CPU and check for a hash_file
     Parameters: self 
     returns: none
     """
     def run(self):
-        self.output.append("-= Starting Brute Force Attack =-")
-        if(self.attack_options.cpu):
-            self.output.append(" Using CPU")
-            self.brute_force_cpu()
+        hash_file = list()
+        #if there is no has file then run single hash crack
+        if(self.attack_options.hash_file_location == ""):
+            self.output.append("-= Starting Brute Force Attack =-")
+            if(self.attack_options.cpu):
+                self.output.append(" Using CPU")
+                self.brute_force_cpu()
+        else:
+            with open(self.attack_options.hash_file_location) as file:
+                hash_file = [line.strip() for line in file]
+
+            for hash in hash_file:
+                self.attack_options.hash_value = hash
+                self.output.append("-= Starting Brute Force Attack =-")
+                if(self.attack_options.cpu):
+                    self.output.append("\tUsing CPU")
+                    self.brute_force_cpu()
+
+
 
 """
 Class Name: DictionaryWorker
@@ -307,11 +323,11 @@ class DictionaryWorker(QRunnable):
     Parameters: self 
     returns: none
     """
-    def pause_process(self):
-        print("Pauseing Application")
-        for id in self.pid:
-            p = psutil.Process(id)
-            p.suspend()
+    # def pause_process(self):
+    #     print("Pauseing Application")
+    #     for id in self.pid:
+    #         p = psutil.Process(id)
+    #         p.suspend()
         
     """
     Name: resume_process
@@ -319,23 +335,36 @@ class DictionaryWorker(QRunnable):
     Parameters: self 
     returns: none
     """
-    def resume_process(self):
-        print("Resuming Application")
-        for id in self.pid:
-            p = psutil.Process(id)
-            p.resume()
+    # def resume_process(self):
+    #     print("Resuming Application")
+    #     for id in self.pid:
+    #         p = psutil.Process(id)
+    #         p.resume()
        
     """
     Name: run
-    Description: Starts dictionary attack selecting the CPU
+    Description: Starts dictionary attack selecting the CPU and check for a hash_file
     Parameters: self 
     returns: none
     """
     def run(self):
-        self.output.append("-= Starting Dictionary Attack =-")
-        if(self.attack_options.cpu):
-            self.output.append(" Using CPU")
-            self.dictionary_cpu()
+        hash_file = list()
+        #if there is no has file then run single hash crack
+        if(self.attack_options.hash_file_location == ""):
+            self.output.append("-= Starting Dictionary Attack =-")
+            if(self.attack_options.cpu):
+                self.output.append(" Using CPU")
+                self.dictionary_cpu()
+        else:
+            with open(self.attack_options.hash_file_location) as file:
+                hash_file = [line.strip() for line in file]
+
+            for hash in hash_file:
+                self.attack_options.hash_value = hash
+                self.output.append("-= Starting Dictionary Attack =-")
+                if(self.attack_options.cpu):
+                    self.output.append("\tUsing CPU")
+                    self.dictionary_cpu() 
 
 """
 Class Name: HybridWorker
@@ -487,15 +516,29 @@ class HybridWorker(QRunnable):
 
     """
     Name: run
-    Description: Starts hybrid attack selecting the CPU
+    Description: Starts hybrid attack selecting the CPU and check for a hash_file
     Parameters: self 
     returns: none
     """
     def run(self):
-        self.output.append("-= Starting Hybrid Attack =-")
-        if(self.attack_options.cpu):
-            self.output.append(" Using CPU")
-            self.hybrid_cpu()
+        hash_file = list()
+        #if there is no has file then run single hash crack
+        if(self.attack_options.hash_file_location == ""):
+            self.output.append("-= Starting Hybrid Attack =-")
+            if(self.attack_options.cpu):
+                self.output.append(" Using CPU")
+                self.hybrid_cpu()
+        else:
+            with open(self.attack_options.hash_file_location) as file:
+                hash_file = [line.strip() for line in file]
+
+            for hash in hash_file:
+                
+                self.attack_options.hash_value = hash
+                self.output.append("-= Starting Hybrid Attack =-")
+                if(self.attack_options.cpu):
+                    self.output.append("\tUsing CPU")
+                    self.hybrid_cpu() 
 
 """
 Class Name: RuleBasedWorker
@@ -651,14 +694,28 @@ class RuleBasedWorker(QRunnable):
 
     """
     Name: run
-    Description: Starts rule based attack selecting the CPU
+    Description: Starts rule based attack selecting the CPU and check for a hash_file
     Parameters: self 
     returns: none
     """
     def run(self):
-        if(self.attack_options.cpu):
-            self.output.append(" Using CPU")
-            self.rulebase_cpu()
+        hash_file = list()
+        if(self.attack_options.hash_file_location == ""):
+            self.output.append("-= Starting Rule-Based Attack =-")
+            if(self.attack_options.cpu):
+                self.output.append(" Using CPU")
+                self.rulebase_cpu()
+        else:
+            with open(self.attack_options.hash_file_location) as file:
+                hash_file = [line.strip() for line in file]
+
+            for hash in hash_file:
+                
+                self.attack_options.hash_value = hash
+                self.output.append("-= Starting Hybrid Attack =-")
+                if(self.attack_options.cpu):
+                    self.output.append("\tUsing CPU")
+                    self.rulebase_cpu() 
 
 """
 Class Name: RainbowTableWorker
@@ -669,13 +726,61 @@ class RainbowTableAttack(QRunnable):
     def __init__(self, attack_options, output):
         self.attack_options = attack_options
         self.output = output;
+        self.filename = "C:\\Users\\ethan\\OneDrive\\Desktop\\Year3\\DSP\\Password_Cracker_App\\Rainbowcrack\\start.bat"
+        self.bat = None
+
+    """
+    Name: add_hash_to_bat
+    Description: Will add the input hash value to the bat file 
+    Parameters: self
+    returns: none
+    """
+    def add_hash_to_bat(self):
+        with open(self.filename, "r") as file:
+            self.bat = file.read()
+
+        self.bat= self.bat.replace("HASH", self.attack_options.hash_value)
+
+        with open(self.filename, "w") as file:
+            file.write(self.bat)            
     
+    """
+    Name: remove_hash_from_bat
+    Description: Will add the HASH keyword back to the bat file for future attacks
+    Parameters: self
+    returns: none
+    """
+    def remove_hash_from_bat(self):
+        with open(self.filename, "r") as file:
+            self.bat = file.read()
+
+        self.bat = self.bat.replace(self.attack_options.hash_value, "HASH")
+
+        with open(self.filename, "w") as file:
+            file.write(self.bat)           
+    
+    """
+    Name: rainbowtable_cpu
+    Description: Will start the rainbow table attack using RainbowCrack through a bat file
+    Parameters: self
+    returns: none
+    """
     def rainbowtable_cpu(self):
-        command = f"Rainbowcrack/rtgen -h {self.attack_options.hash}"
-        attack = subprocess.Popen()
+        #Add hash value to bat file
+        self.add_hash_to_bat()
+        #Start attack from a bat file
+        p = subprocess.Popen(self.filename, stdout=subprocess.PIPE, shell=True)
+        p.wait()
+        result = p.stdout.read()
+        #remove hash value from bat file
+        self.remove_hash_from_bat()
+        #process output of command prompt
+        self.output.append(result.decode())
+        self.output.append("-= Rainbow Crack output =-")
+
+
     
     def run(self):
-        #
         if(self.attack_options.cpu):
             self.output.append(" Using CPU")
             self.rainbowtable_cpu()
@@ -733,7 +838,9 @@ class Ui_App(object):
     """
     def setupUi(self, App):
         App.setObjectName("App")
-        App.resize(1012, 696)
+        App.setFixedSize(1012, 696)
+        
+        
         palette = QtGui.QPalette()
         brush = QtGui.QBrush(QtGui.QColor(0, 120, 215))
         brush.setStyle(QtCore.Qt.BrushStyle.SolidPattern)
@@ -1148,6 +1255,7 @@ class Ui_App(object):
         elif(attack_selection == "Rainbow Table"):
             self.wordlistFrame.setEnabled(True) 
             self.charsetFrame.setEnabled(False)
+            self.attackOptionsBtn.setEnabled(False)
             self.wordlistLbl.setText("Rainbow table") 
             
         elif(attack_selection == "Markov Chain"):
@@ -1206,7 +1314,9 @@ class Ui_App(object):
         #Open file dialog box
         hash_file = QtWidgets.QFileDialog.getOpenFileName(None, 'Open password file', 'C:\\', '*.txt')
         #set text edit to wordlist location
-        self.hash_file_location = self.hashInputTxt.insertPlainText(hash_file[0])
+        self.hashInputTxt.insertPlainText(hash_file[0])
+        self.hash_file_location = hash_file[0]
+        print(self.hash_file_location)
         
     """
     Name: _browseWordlist
@@ -1336,11 +1446,10 @@ class Ui_App(object):
                 self.output.append(f"       - Rainbowtable: {self.attack_options.wordlist_location}")
                 self.output.append(f"       - Processes: {self.attack_options.core_count}")
 
-                pool = QThreadPool.globalInstance()
-                self.worker = RainbowTableAttack(self.attack_options, self.output)
+                rainbowtable=RainbowTableAttack(self.attack_options, self.output)
+                rainbowtable.run()
                 
-                pool.start(self.worker)
-
+        
             if(self.attack_options.attack_type == "Markov Chain"):
                 self.output.append(" Starting Attack ")
                 self.output.append(f"       - Hash: {self.attack_options.hash_value}")

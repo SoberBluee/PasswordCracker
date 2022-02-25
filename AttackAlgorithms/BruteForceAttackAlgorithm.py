@@ -97,13 +97,10 @@ class BruteForceAttackAlgorithm():
         
             #Compare passwords to check if it has cracked
             if(hash == self.hash_to_crack):
-                print(f"Found Password: {password}")
-                
                 #stops and prints timer
                 self.end = time.time()
                 self.time = self.end - self.start
-                print('{:.4f} seconds'.format(self.time))
-
+                #saves result to file
                 self.save_output(password)
                 self.found.set()
  
@@ -147,7 +144,6 @@ class BruteForceAttackAlgorithm():
     returns: none
     """
     def main(self):
-        print(" -= Starting brute force =- ")
         self.brute_force()
         
             
