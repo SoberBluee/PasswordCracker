@@ -112,6 +112,29 @@
      <string>Apply</string>
     </property>
    </widget>
+   <widget class="QLabel" name="minBruteForceLenLbl">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>220</y>
+      <width>211</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Min Brute Force length</string>
+    </property>
+   </widget>
+   <widget class="QSpinBox" name="bruteForceMinSpin">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>250</y>
+      <width>81</width>
+      <height>21</height>
+     </rect>
+    </property>
+   </widget>
   </widget>
  </widget>
  <resources/>

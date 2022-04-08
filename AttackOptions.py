@@ -21,3 +21,4 @@ class AttackOptions:
         self.core_count = 1
         self.pass_phrase_len = 0
         self.max_brute_force = 0
+        self.min_brute_force = 0

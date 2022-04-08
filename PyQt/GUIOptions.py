@@ -7,18 +7,9 @@
 
 
 from PyQt6 import QtCore, QtGui, QtWidgets
-import multiprocessing
 
-class Ui_OptionsWindow(object):
-    def __init__(self, attack_options):
-        super().__init__()
-        #Default values if user does not change options
-        self.core_count = 1
-        self.pass_phrase_len = 10
-        self.max_brute_force = 8
-        self.min_brute_force = 1
-        self.attack_options = attack_options
 
+class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
         Form.resize(294, 363)
@@ -56,42 +47,8 @@ class Ui_OptionsWindow(object):
         self.bruteForceMinSpin.setGeometry(QtCore.QRect(20, 250, 81, 21))
         self.bruteForceMinSpin.setObjectName("bruteForceMinSpin")
 
-        self.applyOptionsBtn.clicked.connect(self._save)
-
         self.retranslateUi(Form)
         QtCore.QMetaObject.connectSlotsByName(Form)
-
-    def _save(self):
-        self.process_value = self.threadCountSpin.value()
-        self.passphrase_value = self.passphraseMaxLenSpin.value()
-        self.max_brute_force_value_spin = self.bruteForceMaxSpin.value() 
-        self.min_bruteforce_value_spin = self.bruteForceMinSpin.value()
-
-        self.max_cpu = multiprocessing.cpu_count()
-
-        #Set default values if user does not input
-        if(self.process_value == 0):
-            self.attack_options.core_count = self.core_count
-        elif(self.process_value > self.max_cpu):
-            self.attack_options.core_count = self.max_cpu
-        else:
-            self.attack_options.core_count  = self.process_value
-
-        if(self.passphrase_value == 0):
-            self.attack_options.pass_phrase_len = self.pass_phrase_len
-        else:
-            self.attack_options.pass_phrase_len  = self.passphrase_value
-
-        if(self.max_brute_force_value_spin == 0):
-            self.attack_options.max_brute_force = self.max_brute_force
-        else:
-            self.attack_options.max_brute_force  = self.max_brute_force_value_spin
-
-        if(self.min_bruteforce_value_spin == 0):
-            self.attack_options.min_brute_force = self.min_brute_force
-        else:
-            self.attack_options.min_brute_force = self.min_bruteforce_value_spin
-        
 
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
@@ -103,3 +60,12 @@ class Ui_OptionsWindow(object):
         self.applyOptionsBtn.setText(_translate("Form", "Apply"))
         self.minBruteForceLenLbl.setText(_translate("Form", "Min Brute Force length"))
 
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    Form = QtWidgets.QWidget()
+    ui = Ui_Form()
+    ui.setupUi(Form)
+    Form.show()
+    sys.exit(app.exec())

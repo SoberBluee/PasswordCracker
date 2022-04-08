@@ -219,8 +219,12 @@ class DictionaryWorker(QRunnable):
     def split_data(self):
         data_to_split = list()
         tic = time.time()
+
         with open(self.attack_options.wordlist_location, encoding="latin-1") as file:
             data_to_split = [line for line in file]
+
+        if(self.core_count() == 1):
+            return data_to_split
 
         data = [data_to_split[i::self.core_count] for i in range(self.core_count)] #split up data into chuncks for each process
         toc = time.time()
@@ -314,7 +318,7 @@ class DictionaryWorker(QRunnable):
         #Terminates processes
         for process in self.process_list:
             print("Terminating")
-            self.output.appaned(f"\t-= Terminating {process} =-")
+            self.output.append(f"\t-= Terminating {process} =-")
             process.terminate()
 
     """
@@ -400,7 +404,10 @@ class HybridWorker(QRunnable):
         #append data using set comprehensions
         with open(self.attack_options.wordlist_location, encoding="latin-1") as file: 
             data_to_split = [line for line in file]
-        
+
+        if(self.core_count() == 1):
+            return data_to_split
+
         data = [data_to_split[i::self.core_count] for i in range(self.core_count)] #split up data into chuncks for each process
         end = time.time()
 
@@ -421,6 +428,9 @@ class HybridWorker(QRunnable):
         #opens hybrid rule file
         with open("Rulesets\hybrid_rule\hybrid-0-4.rule","r") as file:
             rules_to_split = [line for line in file]
+
+        if(self.core_count() == 1):
+            return rules_to_split
 
         rules =  [rules_to_split[i::self.core_count] for i in range(self.core_count)]
         end = time.time()
@@ -575,6 +585,9 @@ class RuleBasedWorker(QRunnable):
         with open(self.attack_options.wordlist_location, encoding="latin-1") as file: 
             data_to_split = [line for line in file]
         
+        if(self.core_count() == 1):
+            return data_to_split
+
         data = [data_to_split[i::self.core_count] for i in range(self.core_count)] #split up data into chuncks for each process
         end = time.time()
 
@@ -777,8 +790,6 @@ class RainbowTableAttack(QRunnable):
         self.output.append(result.decode())
         self.output.append("\t-= Rainbow Crack output =-")
 
-
-    
     def run(self):
         hash_file = list()
         if(self.attack_options.hash_file_location == ""):
@@ -791,7 +802,6 @@ class RainbowTableAttack(QRunnable):
                 hash_file = [line.strip() for line in file]
 
             for hash in hash_file:
-                
                 self.attack_options.hash_value = hash
                 self.output.append("\t-= Starting RainbowTable Attack =-")
                 if(self.attack_options.cpu):
@@ -808,12 +818,36 @@ class MarkovWorker(QRunnable):
     def __init__(self, attack_options, output):
         self.attack_options = attack_options
         self.output = output
-    
-    def split_data(self):
-        pass
+
 
     def markov_cpu(self):
-        pass
+        #found event triggered when password found
+        self.found = Event()
+
+        for idx, i in enumerate(range(self.core_count)):
+            dictionary = MarkovAttackAlgorithm(self.attack_options, data[idx], self.found)
+            #Creating process using the dictionary main function
+            p = multiprocessing.Process(target=dictionary.main)
+            self.process_list.append(p)
+
+        #Starts processes
+        for process in self.process_list:
+            process.start()
+            
+        #Wait's until password is found
+        self.found.wait()
+
+        #Terminates processes
+        for process in self.process_list:
+            print("Terminating")
+            process.terminate()
+
+        for process in self.process_list:
+            process.join()
+            
+        self.process_result()
+        self.output.append(" Attack Finished ")
+        print("Done")
 
     def run(self):
         hash_file = list()
@@ -827,7 +861,6 @@ class MarkovWorker(QRunnable):
                 hash_file = [line.strip() for line in file]
 
             for hash in hash_file:
-                
                 self.attack_options.hash_value = hash
                 self.output.append("\t-= Starting Markov Chains Attack =-")
                 if(self.attack_options.cpu):
@@ -1392,14 +1425,17 @@ class Ui_App(object):
     """
     def _browseWordlist(self):
         print("-Browse Wordlist-")
+        self.wordlist_location = ""
         #Open file dialog box
         wordlist_location = QtWidgets.QFileDialog.getOpenFileName(None, 'Open Wordlist', 'C:\\', '*.txt')
+        self.wordlistTxt.clear()
         #set text edit to wordlist location
         self.wordlistTxt.insertPlainText(wordlist_location[0])
         #split string to get filename
         file_name = wordlist_location[0].split("/")
         file_name = file_name[-1]
         #Set label to file name
+       
         self.wordlistFilenameLbl.setText(file_name)
         self.wordlist_location = wordlist_location[0]
 
@@ -1450,12 +1486,15 @@ class Ui_App(object):
         self.attack_options.charsetSymbols = self.charsetSymbols.isChecked()
         self.attack_options.cpu = self.cpu_enabled.isChecked()
         self.attack_options.core_count = self.options.attack_options.core_count
+        self.attack_options.max_brute_force = self.options.attack_options.max_brute_force
+        self.attack_options.min_brute_force = self.options.attack_options.min_brute_force
+
         
         parameter_check = self._check_parameters()
         if(parameter_check == [True, True, True]):
             if(self.attack_options.attack_type == "Brute Force"):
                 charset = self._process_charset()
-                self.output.append("======================================================================================")                
+                self.output.append("==========================================================")                
                 self.output.append(" Starting Attack ")
                 self.output.append(f"\t- Hash: {self.attack_options.hash_value}")
                 self.output.append(f"\t- Type: {self.attack_options.hash_type}")
@@ -1463,6 +1502,7 @@ class Ui_App(object):
                 self.output.append(f"\t- Wordlist: {self.attack_options.wordlist_location}")
                 self.output.append(f"\t- Charset: '{charset}'")
                 self.output.append(f"\t- Processes: {self.attack_options.core_count}")
+                self.output.append(f"\t- Min len: {self.attack_options.min_brute_force}")
                 self.output.append(f"\t- Max len: {self.attack_options.max_brute_force}")
 
                 #Creates another thread for the attack to run on to prevent application freezing
@@ -1570,7 +1610,8 @@ class Ui_App(object):
         print("-Stop Attack-")
         try:
             self.worker.stop_process()
-        except AttributeError: 
+        except AttributeError as e:
+            print(e) 
             self.output.append(" -= Cannot stop that hasn't started =- ")
             return
 

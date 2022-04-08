@@ -124,19 +124,20 @@ class BruteForceAttackAlgorithm():
     """
     def brute_force(self):
         #Define starting length
-        length = 1
+        length = self.attack_options.min_brute_force
     
         self.start = time.time()
         #if setting is unchanged then attempty to crack infinatly
         if(self.attack_options.max_brute_force == 0):
             while(True):
+                print(f"Length: {length}")
                 self.crack(length, "")
                 length+=1
         else:
-            while(length != self.attack_options.max_brute_force):
-                self.crack(length, "")
-                length+=1
-                
+            for len in range(length, self.attack_options.max_brute_force):
+                print(f"Length: {len}")
+                self.crack(len, "")
+        
     """
     Name: main
     Description: Main function to start brute force attack
