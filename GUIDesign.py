@@ -83,7 +83,7 @@ class BruteForceWorker(QRunnable):
     returns: none
     """
     def process_result(self):
-        result_counter = 0 
+        result_counter = 1 
         #Will cound number of results file in case there are more than one result file
         for filename in os.listdir("AppData/"):
             if filename.startswith("result"):
@@ -240,7 +240,7 @@ class DictionaryWorker(QRunnable):
     returns: none
     """
     def process_result(self):
-        result_counter = 0 
+        result_counter = 1 
         #Will cound number of results file in case there are more than one result file
         for filename in os.listdir("AppData/"):
             if filename.startswith("result"):
@@ -440,7 +440,7 @@ class HybridWorker(QRunnable):
     returns: none
     """
     def process_result(self):
-        result_counter = 0 
+        result_counter = 1 
         #Will cound number of results file in case there are more than one result file
         for filename in os.listdir("AppData/"):
             if filename.startswith("result"):
@@ -617,7 +617,7 @@ class RuleBasedWorker(QRunnable):
     returns: none
     """
     def process_result(self):
-        result_counter = 0 
+        result_counter = 1 
         #Will cound number of results file in case there are more than one result file
         for filename in os.listdir("AppData/"):
             if filename.startswith("result"):

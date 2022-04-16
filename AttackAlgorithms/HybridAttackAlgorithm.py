@@ -54,7 +54,7 @@ class HybridAttackAlgorithm():
         try:
             with open(f"AppData/result{num}.txt", "x") as result:
                 result.write(f"{passwd}\n")
-                result.write(f"1.032")
+                result.write(f"{self.time}")
                 result.close()
         except FileExistsError:
             self.save_output(passwd, num+1)
@@ -104,7 +104,7 @@ class HybridAttackAlgorithm():
             #2 calles to apply rules as a prefix and suffix
             self.apply_rules(rule, False)
             self.apply_rules(rule, True)
-
+        
     """
     Name: main  
     Description: starts a hybird attack

@@ -26,13 +26,14 @@ def convert_probabilities(statistics):
 
 def get_data():
     with open('rockyou-train.txt',  encoding='ISO-8859-1') as file:
-        lst = set([line for line in file])
+        lst = [line for line in file]
 
     with open("rockyou.txt", encoding='ISO-8859-1') as file:
-        lst2 = set([line for line in file])
+        lst2 = [line for line in file]
 
-    lst += "\n"
     lst += lst2
+    lst = set(lst)
+    return lst
 
 def main():
     statistics = {}
