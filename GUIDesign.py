@@ -21,6 +21,8 @@ from PyQt6.QtCore import QObject, QRunnable, QThread, pyqtSignal, Qt, QThreadPoo
 
 #Attack algorithm imports
 from GUIOptions import Ui_OptionsWindow
+from GUIHelp import Ui_AlgorithmDocs
+
 from AttackOptions import AttackOptions
 from AttackAlgorithms.BruteForceAttackAlgorithm import BruteForceAttackAlgorithm 
 from AttackAlgorithms.DictionaryAttackAlgorithm import DicionaryAttackAlgorithm
@@ -159,7 +161,7 @@ class BruteForceWorker(QRunnable):
         #Terminates processes
         for process in self.process_list:
             print("Terminating")
-            self.output(f"\t-= Terminating {process} =-")
+            self.output.append(f"\t-= Terminating {process} =-")
             process.terminate()
     
     """
@@ -222,9 +224,6 @@ class DictionaryWorker(QRunnable):
 
         with open(self.attack_options.wordlist_location, encoding="latin-1") as file:
             data_to_split = [line for line in file]
-
-        if(self.core_count() == 1):
-            return data_to_split
 
         data = [data_to_split[i::self.core_count] for i in range(self.core_count)] #split up data into chuncks for each process
         toc = time.time()
@@ -404,10 +403,7 @@ class HybridWorker(QRunnable):
         #append data using set comprehensions
         with open(self.attack_options.wordlist_location, encoding="latin-1") as file: 
             data_to_split = [line for line in file]
-
-        if(self.core_count() == 1):
-            return data_to_split
-
+        
         data = [data_to_split[i::self.core_count] for i in range(self.core_count)] #split up data into chuncks for each process
         end = time.time()
 
@@ -428,9 +424,6 @@ class HybridWorker(QRunnable):
         #opens hybrid rule file
         with open("Rulesets\hybrid_rule\hybrid-0-4.rule","r") as file:
             rules_to_split = [line for line in file]
-
-        if(self.core_count() == 1):
-            return rules_to_split
 
         rules =  [rules_to_split[i::self.core_count] for i in range(self.core_count)]
         end = time.time()
@@ -521,7 +514,7 @@ class HybridWorker(QRunnable):
         #Terminates processes
         for process in self.process_list:
             print("Terminating")
-            self.output(f"\t-= Terminating {process} =-")
+            self.output.append(f"\t-= Terminating {process} =-")
             process.terminate()
 
     """
@@ -585,9 +578,6 @@ class RuleBasedWorker(QRunnable):
         with open(self.attack_options.wordlist_location, encoding="latin-1") as file: 
             data_to_split = [line for line in file]
         
-        if(self.core_count() == 1):
-            return data_to_split
-
         data = [data_to_split[i::self.core_count] for i in range(self.core_count)] #split up data into chuncks for each process
         end = time.time()
 
@@ -701,7 +691,8 @@ class RuleBasedWorker(QRunnable):
         #Terminates processes
         for process in self.process_list:
             print("Terminating")
-            self.output(f"\t-= Terminating {process} =-")
+            self.output.append(f"\t-= Terminating {process} =-")
+
             process.terminate()
 
     """
@@ -790,6 +781,26 @@ class RainbowTableAttack(QRunnable):
         self.output.append(result.decode())
         self.output.append("\t-= Rainbow Crack output =-")
 
+    """
+    Name: stop_process
+    Description: Will terminate processes when button is pressed
+    Parameters: self 
+    returns: none
+    """
+    def stop_process(self):
+        #Terminates processes
+        for process in self.process_list:
+            print("Terminating")
+            self.output.append(f"\t-= Terminating {process} =-")
+
+            process.terminate()
+
+    """
+    Name: run
+    Description: Starts rainbow table attack selecting the CPU and check for a hash_file
+    Parameters: self 
+    returns: none
+    """
     def run(self):
         hash_file = list()
         if(self.attack_options.hash_file_location == ""):
@@ -807,7 +818,6 @@ class RainbowTableAttack(QRunnable):
                 if(self.attack_options.cpu):
                     self.output.append("\tUsing CPU")
                     self.rainbowtable_cpu() 
-
     
 """
 Class Name: MarkovWorker
@@ -849,6 +859,12 @@ class MarkovWorker(QRunnable):
         self.output.append(" Attack Finished ")
         print("Done")
 
+    """
+    Name: run
+    Description: Starts markov chain attack selecting the CPU and check for a hash_file
+    Parameters: self 
+    returns: none
+    """
     def run(self):
         hash_file = list()
         if(self.attack_options.hash_file_location == ""):
@@ -974,7 +990,7 @@ class Ui_App(object):
         self.deviceFrame.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
         self.deviceFrame.setObjectName("deviceFrame")
         self.deviceLbl = QtWidgets.QLabel(self.deviceFrame)
-        self.deviceLbl.setGeometry(QtCore.QRect(20, 10, 91, 16))
+        self.deviceLbl.setGeometry(QtCore.QRect(20, 10, 91, 21))
         font = QtGui.QFont()
         font.setPointSize(16)
         self.deviceLbl.setFont(font)
@@ -1011,16 +1027,16 @@ class Ui_App(object):
         self.charsetAll.setGeometry(QtCore.QRect(10, 40, 161, 20))
         self.charsetAll.setObjectName("charsetAll")
         self.charsetLower = QtWidgets.QCheckBox(self.charsetFrame)
-        self.charsetLower.setGeometry(QtCore.QRect(10, 60, 181, 20))
+        self.charsetLower.setGeometry(QtCore.QRect(10, 60, 181, 21))
         self.charsetLower.setObjectName("charsetLower")
         self.charsetUpper = QtWidgets.QCheckBox(self.charsetFrame)
         self.charsetUpper.setGeometry(QtCore.QRect(10, 80, 181, 20))
         self.charsetUpper.setObjectName("charsetUpper")
         self.charsetNumbers = QtWidgets.QCheckBox(self.charsetFrame)
-        self.charsetNumbers.setGeometry(QtCore.QRect(10, 100, 151, 20))
+        self.charsetNumbers.setGeometry(QtCore.QRect(10, 100, 151, 21))
         self.charsetNumbers.setObjectName("charsetNumbers")
         self.charsetSymbols = QtWidgets.QCheckBox(self.charsetFrame)
-        self.charsetSymbols.setGeometry(QtCore.QRect(10, 120, 151, 20))
+        self.charsetSymbols.setGeometry(QtCore.QRect(10, 120, 151, 21))
         self.charsetSymbols.setObjectName("charsetSymbols")
         self.wordlistFrame = QtWidgets.QFrame(self.attackGroup)
         self.wordlistFrame.setEnabled(True)
@@ -1043,7 +1059,7 @@ class Ui_App(object):
         self.wordlistFrame.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
         self.wordlistFrame.setObjectName("wordlistFrame")
         self.wordlistLbl = QtWidgets.QLabel(self.wordlistFrame)
-        self.wordlistLbl.setGeometry(QtCore.QRect(10, 10, 191, 16))
+        self.wordlistLbl.setGeometry(QtCore.QRect(10, 10, 191, 21))
         font = QtGui.QFont()
         font.setPointSize(16)
         self.wordlistLbl.setFont(font)
@@ -1083,7 +1099,7 @@ class Ui_App(object):
         self.attacktypeFrame.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
         self.attacktypeFrame.setObjectName("attacktypeFrame")
         self.attackTypeLbl = QtWidgets.QLabel(self.attacktypeFrame)
-        self.attackTypeLbl.setGeometry(QtCore.QRect(40, 10, 101, 21))
+        self.attackTypeLbl.setGeometry(QtCore.QRect(30, 10, 111, 21))
         font = QtGui.QFont()
         font.setPointSize(16)
         self.attackTypeLbl.setFont(font)
@@ -1117,7 +1133,7 @@ class Ui_App(object):
         self.hashTypeFrame.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
         self.hashTypeFrame.setObjectName("hashTypeFrame")
         self.hashTypeLbl = QtWidgets.QLabel(self.hashTypeFrame)
-        self.hashTypeLbl.setGeometry(QtCore.QRect(40, 10, 91, 21))
+        self.hashTypeLbl.setGeometry(QtCore.QRect(40, 10, 101, 21))
         font = QtGui.QFont()
         font.setPointSize(16)
         self.hashTypeLbl.setFont(font)
@@ -1240,6 +1256,7 @@ class Ui_App(object):
         self.resumeBtn.clicked.connect(self._resume)
         self.saveBtn.clicked.connect(self._save)
         self.stopBtn.clicked.connect(self._stop)
+        self.helpBtn.clicked.connect(self._help)
 
         #On a combo box change, call _alterFrame
         self.attackTypeCombo.currentIndexChanged.connect(self._alterFrame) 
@@ -1753,7 +1770,20 @@ class Ui_App(object):
         self.window = QtWidgets.QMainWindow()
         self.options.setupUi(self.window)
         self.window.show()
-        
+
+    """
+    Name: _help
+    Description: will open up the application help
+    Parameters: self
+    returns: none
+    """
+    def _help(self):
+        print("-Help-")
+        self.window = QtWidgets.QMainWindow()
+        self.help = Ui_AlgorithmDocs()
+        self.help.setupUi(self.window)
+        self.window.show()
+
     """
     Name: _detect
     Description: Will try and detect hash from input field

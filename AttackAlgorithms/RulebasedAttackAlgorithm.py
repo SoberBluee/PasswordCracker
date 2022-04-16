@@ -32,39 +32,20 @@ class RulebasedAttackAlgorithm():
         return ''.join(i for i in word if i not in self.charset)
 
     """
-    Name: recurse_filename
-    Description: Will recursivly change the filename if the same one already exists
-    Parameters: self, num:Integer, password:String
-    returns: none
-    """
-    def recurse_filename(self, num, password):
-        try:
-            new_filename = f"AppData/result{num}.txt"
-            with open(new_filename, "x") as result:
-                result.write(f"{password}\n")
-                result.write(f"{self.time:.4f}")
-                result.close()
-        except FileExistsError:
-            self.recurse_filename(num+1, password) 
-        
-    """
-    Name: saveOutput
-    Description:Will save the output to a file and will change filename if already exists
-    Parameters: self
+    Name: save_output
+    Description: Will save the output to a file and will change filename if already exists
+    Parameters: self, passwd: String (password to be saves), num: Integer (number of result file)
     returns: hashing algorithm
     """
-    def save_output(self, passwd):
-        password = passwd
+    def save_output(self, passwd, num=1):
         filename = ""
-        num = 1
         try:
-            with open("AppData/result.txt", "x") as result:
-                result.write(f"{password}\n")
-                result.write(f"{self.time:.4f}")
+            with open(f"AppData/result{num}.txt", "x") as result:
+                result.write(f"{passwd}\n")
+                result.write(f"1.032")
                 result.close()
         except FileExistsError:
-            self.recurse_filename(num, passwd)
-
+            self.save_output(passwd, num+1)
 
     """
     Name: apply_rules

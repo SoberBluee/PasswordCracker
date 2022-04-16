@@ -1,0 +1,1 @@
+pyuic6 -x help.ui -o GUIHelp.py

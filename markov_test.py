@@ -38,12 +38,6 @@ def main():
             password += choose_char(stats, next_char)
             
         print(password)
-            
-            
-            
-
-            
-        
-
+    
 if __name__ == '__main__':
     main()

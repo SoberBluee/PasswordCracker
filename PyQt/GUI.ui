@@ -233,7 +233,7 @@
         <x>20</x>
         <y>10</y>
         <width>91</width>
-        <height>16</height>
+        <height>21</height>
        </rect>
       </property>
       <property name="font">
@@ -360,7 +360,7 @@
         <x>10</x>
         <y>60</y>
         <width>181</width>
-        <height>20</height>
+        <height>21</height>
        </rect>
       </property>
       <property name="toolTip">
@@ -392,7 +392,7 @@
         <x>10</x>
         <y>100</y>
         <width>151</width>
-        <height>20</height>
+        <height>21</height>
        </rect>
       </property>
       <property name="toolTip">
@@ -408,7 +408,7 @@
         <x>10</x>
         <y>120</y>
         <width>151</width>
-        <height>20</height>
+        <height>21</height>
        </rect>
       </property>
       <property name="toolTip">
@@ -489,7 +489,7 @@
         <x>10</x>
         <y>10</y>
         <width>191</width>
-        <height>16</height>
+        <height>21</height>
        </rect>
       </property>
       <property name="font">
@@ -618,9 +618,9 @@
      <widget class="QLabel" name="attackTypeLbl">
       <property name="geometry">
        <rect>
-        <x>40</x>
+        <x>30</x>
         <y>10</y>
-        <width>101</width>
+        <width>111</width>
         <height>21</height>
        </rect>
       </property>
@@ -734,7 +734,7 @@
        <rect>
         <x>40</x>
         <y>10</y>
-        <width>91</width>
+        <width>101</width>
         <height>21</height>
        </rect>
       </property>
