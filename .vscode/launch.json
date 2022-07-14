@@ -6,7 +6,7 @@
     "configurations": [
 
         {
-            "name": "Python: GUIDesign.py",
+            "name": "python: GUIDesign.py",
             "type": "python",
             "request": "launch",
             "program": "GUIDesign.py",
